@@ -1,0 +1,22 @@
+[
+  "_headers",
+  "ar.js",
+  "index.html",
+  "library-store.js",
+  "library.js",
+  "main.js",
+  "model-io.js",
+  "site-files.json",
+  "style.css",
+  "vendor/three/LICENSE",
+  "vendor/three/build/three.core.js",
+  "vendor/three/build/three.module.js",
+  "vendor/three/examples/jsm/controls/OrbitControls.js",
+  "vendor/three/examples/jsm/environments/RoomEnvironment.js",
+  "vendor/three/examples/jsm/exporters/USDZExporter.js",
+  "vendor/three/examples/jsm/libs/fflate.module.js",
+  "vendor/three/examples/jsm/loaders/GLTFLoader.js",
+  "vendor/three/examples/jsm/utils/BufferGeometryUtils.js",
+  "vendor/three/examples/jsm/utils/SkeletonUtils.js",
+  "website-export.js"
+]

@@ -1,0 +1,7 @@
+{
+  "version": 1,
+  "defaultId": "glass-bottle",
+  "models": [
+    {"id":"glass-bottle","name":"气体洗涤瓶","src":"assets/glass-bottle.glb","profile":"bottle","description":"500 mL / 24/29 磨口"}
+  ]
+}

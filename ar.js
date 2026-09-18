@@ -1,15 +1,18 @@
 import { USDZExporter } from 'three/addons/exporters/USDZExporter.js';
 import { FrontSide } from 'three';
 
-export async function exportARModel(product,originals){
+export async function exportARModel(product,originals,{profile='bottle'}={}){
   const clone=product.clone(true),materials=[];
   const sources=[];product.traverse(obj=>{if(obj.isMesh)sources.push(obj);});
   let index=0;
   clone.traverse(obj=>{
     if(!obj.isMesh)return;
-    const source=sources[index++];obj.material=(originals.get(source)?.material||source.material).clone();
-    const m=obj.material;materials.push(m);m.emissive?.set(0);m.side=FrontSide;
-    if(m.transmission>0){m.transmission=0;m.opacity=obj.userData.part==='head'?.65:.28;m.transparent=true;m.depthWrite=false;m.roughness=obj.userData.part==='head'?.5:.18;m.color.set(0xc8ebec);}
+    const source=sources[index++];const cloned=[].concat(originals.get(source)?.material||source.material).map(base=>{
+      const m=base.clone();materials.push(m);m.side=FrontSide;
+      if(m.transmission>0){m.transmission=0;m.opacity=profile==='bottle'?(obj.userData.part==='head'?.65:.28):.3;m.transparent=true;m.depthWrite=false;
+        if(profile==='bottle'){m.roughness=obj.userData.part==='head'?.5:.18;m.color.set(0xc8ebec);}}
+      return m;
+    });obj.material=cloned.length===1?cloned[0]:cloned;
   });
   clone.updateMatrixWorld(true);
   try{return await new USDZExporter().parseAsync(clone,{quickLookCompatible:true,onlyVisible:true,maxTextureSize:1024,includeAnchoringProperties:true,ar:{anchoring:{type:'plane'},planeAnchoring:{alignment:'horizontal'}}});}
@@ -39,18 +42,21 @@ export function setupAR(api){
     if(preparing)return preparing;
     const currentVersion=version;
     preparing=(async()=>{
-      const bytes=await exportARModel(product,originals);
+      const bytes=await exportARModel(product,originals,{profile:state.profile});
+      if(currentVersion!==version)throw new Error('模型已变化，请重新打开 AR。');
       const url=URL.createObjectURL(new Blob([bytes],{type:'model/vnd.usdz+zip'}));if(cachedURL)URL.revokeObjectURL(cachedURL);cachedURL=url;cachedVersion=currentVersion;return url;
     })();
     try{return await preparing;}finally{preparing=null;}
   }
   async function openDialog(){
+    if(!state.loaded||state.busy||state.inAR||state.arStarting)return;
     $('#ar-feedback').textContent='';$('#ar-progress').hidden=true;$('#quicklook-link').hidden=true;$('#start-webxr').hidden=true;$('#desktop-help').hidden=true;
     dialog.showModal();await capability();
+    if(!dialog.open)return;
     if(canXR){$('#ar-description').textContent='允许相机访问后，缓慢移动手机寻找桌面。出现圆环时，点击放置当前模型。';$('#start-webxr').hidden=false;}
     else if(quickLook){
       $('#ar-description').textContent='将当前装配状态转换为 iPhone AR 模型。准备完成后，点击下方按钮打开系统查看器。';$('#ar-progress').hidden=false;
-      try{const url=await makeUSDZ();$('#quicklook-link').href=url+'#allowsContentScaling=0';$('#quicklook-link').hidden=false;}
+      try{const url=await makeUSDZ();if(dialog.open){$('#quicklook-link').href=url+'#allowsContentScaling=0';$('#quicklook-link').hidden=false;}}
       catch(error){console.error(error);$('#ar-feedback').textContent='AR 文件准备失败，请关闭后重试。网页 3D 仍可正常使用。';}
       finally{$('#ar-progress').hidden=true;}
     }else{$('#ar-description').textContent='这个浏览器目前没有可用的 AR 入口。你仍然可以操作 3D 模型；在支持 AR 的手机浏览器中打开此网页，再点击“在空间中查看”。';$('#desktop-help').hidden=false;}
@@ -58,12 +64,12 @@ export function setupAR(api){
   $('#open-ar').addEventListener('click',openDialog);$('#close-ar').addEventListener('click',()=>dialog.close());dialog.addEventListener('click',e=>{if(e.target===dialog){const r=dialog.getBoundingClientRect();if(e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom)dialog.close();}});
   $('#copy-link').addEventListener('click',async()=>{try{await navigator.clipboard.writeText(location.href);$('#ar-feedback').textContent='链接已复制。';}catch{$('#site-link').focus();$('#site-link').select();$('#ar-feedback').textContent='请长按或手动复制上方链接。';}});
   function restore(){
-    hitSource?.cancel();hitSource=null;session=null;refSpace=null;placed=false;reticle.visible=false;state.inAR=false;xrStarting=false;
+    hitSource?.cancel();hitSource=null;session=null;refSpace=null;placed=false;reticle.visible=false;state.inAR=false;state.arStarting=false;xrStarting=false;
     product.visible=true;if(savedPosition)product.position.copy(savedPosition);if(savedQuaternion)product.quaternion.copy(savedQuaternion);if(savedScale)product.scale.copy(savedScale);
     shadow.visible=true;controls.enabled=true;applyAppearance();overlay.hidden=true;document.body.classList.remove('xr-active');renderer.setClearColor(0x000000,0);resize();fitView();
   }
   async function startXR(){
-    if(xrStarting||session)return;xrStarting=true;
+    if(xrStarting||session||state.busy||!state.loaded)return;xrStarting=true;state.arStarting=true;
     $('#start-webxr').disabled=true;$('#ar-feedback').textContent='';
     try{
       const next=await navigator.xr.requestSession('immersive-ar',{requiredFeatures:['hit-test'],optionalFeatures:['dom-overlay'],domOverlay:{root:overlay}});
@@ -77,7 +83,7 @@ export function setupAR(api){
     }catch(error){
       console.error(error);if(session)await session.end().catch(()=>{});restore();
       if(!dialog.open)dialog.showModal();$('#ar-feedback').textContent='无法启动 AR。请确认已允许相机访问，并使用支持 AR 的手机浏览器。';
-    }finally{$('#start-webxr').disabled=false;xrStarting=false;}
+    }finally{$('#start-webxr').disabled=false;xrStarting=false;state.arStarting=false;}
   }
   function place(){
     if(!session||!reticle.visible)return;
