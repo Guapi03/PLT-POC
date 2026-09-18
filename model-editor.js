@@ -1,0 +1,406 @@
+import { normalizeModelSettings, mergeGroups, splitGroup } from './model-settings.js';
+
+const PRESETS = [
+  ['auto', '自动识别'], ['original', '原始材质'], ['glass', '透明玻璃'],
+  ['frosted', '磨砂玻璃'], ['solid', '不透明材质'],
+];
+const copy = value => JSON.parse(JSON.stringify(value));
+
+function el(tag, className, text) {
+  const node = document.createElement(tag);
+  if (className) node.className = className;
+  if (text !== undefined) node.textContent = text;
+  return node;
+}
+function button(text, className, action) {
+  const node = el('button', className, text);
+  node.type = 'button';
+  if (action) node.addEventListener('click', action);
+  return node;
+}
+function labeled(title, input, className = 'editor-field') {
+  const label = el('label', className);
+  label.append(el('span', 'editor-field-title', title), input);
+  return label;
+}
+function optionSelect(options, value) {
+  const select = el('select');
+  for (const [key, label] of options) {
+    const option = el('option', '', label);
+    option.value = key;
+    select.append(option);
+  }
+  select.value = value;
+  return select;
+}
+
+/** A draft editor. The caller owns persistence and the currently displayed model. */
+export function setupModelEditor({ getContext, onSave, onPreview, isBusy = () => false }) {
+  const cssURL = new URL('./model-editor.css', import.meta.url).href;
+  if (![...document.querySelectorAll('link[rel="stylesheet"]')].some(link => link.href === cssURL)) {
+    const link = el('link');
+    link.rel = 'stylesheet';
+    link.href = cssURL;
+    document.head.append(link);
+  }
+  const dialog = el('dialog', 'model-editor');
+  dialog.id = 'model-editor-dialog';
+  dialog.setAttribute('aria-labelledby', 'model-editor-title');
+  const form = el('form', 'model-editor-form');
+  form.noValidate = true;
+  const header = el('header', 'editor-header');
+  const heading = el('div');
+  heading.append(el('p', 'eyebrow', 'MODEL SETTINGS'));
+  const title = el('h2', '', '编辑模型');
+  title.id = 'model-editor-title';
+  heading.append(title, el('p', 'editor-intro', '设置展示材质、探索分组与装配动作。保存后会随网站包一起导出。'));
+  const close = button('×', 'editor-close', () => cancel());
+  close.id = 'model-editor-close';
+  close.setAttribute('aria-label', '取消并关闭编辑');
+  header.append(heading, close);
+  const body = el('div', 'editor-body');
+  const fields = el('fieldset', 'editor-fields');
+  fields.append(body);
+  const footer = el('footer', 'editor-footer');
+  const feedback = el('p', 'editor-feedback');
+  feedback.id = 'model-editor-feedback';
+  feedback.setAttribute('role', 'status');
+  feedback.setAttribute('aria-live', 'polite');
+  const actions = el('div', 'editor-actions');
+  const cancelButton = button('取消', 'editor-button', () => cancel());
+  cancelButton.id = 'model-editor-cancel';
+  const previewButton = button('预览设置', 'editor-button', () => preview());
+  previewButton.id = 'model-editor-preview';
+  previewButton.hidden = typeof onPreview !== 'function';
+  const saveButton = button('保存设置', 'editor-button editor-primary');
+  saveButton.id = 'model-editor-save';
+  saveButton.type = 'submit';
+  actions.append(cancelButton, previewButton, saveButton);
+  footer.append(feedback, actions);
+  form.append(header, fields, footer);
+  dialog.append(form);
+  document.body.append(dialog);
+
+  let context, draft, originalSettings, working = false, previewed = false;
+  let selectedGroups = new Set();
+  let groupList, assemblyList, mergeButton, assemblyFields, nameInput;
+  let moveLabels = new Map();
+  let hideLabels = new Map();
+
+  function status(message, error = false) {
+    feedback.textContent = message;
+    feedback.classList.toggle('error', error);
+  }
+  function busy(value) {
+    working = value;
+    fields.disabled = value;
+    for (const node of [close, cancelButton, previewButton, saveButton]) node.disabled = value;
+    dialog.setAttribute('aria-busy', String(value));
+    saveButton.textContent = value ? '请稍候…' : '保存设置';
+  }
+  function normalized() {
+    return normalizeModelSettings(copy(draft.settings), context.meshes, { profile: context.entry.profile });
+  }
+  function validate() {
+    if (!draft.name.trim()) {
+      nameInput.focus();
+      throw new Error('请填写模型名称。');
+    }
+    const emptyGroup = draft.settings.groups.find(group => !group.name.trim());
+    if (emptyGroup) {
+      groupList.querySelectorAll('[data-group-name]').forEach(input => {
+        if (input.dataset.groupName === emptyGroup.id) input.focus();
+      });
+      throw new Error('请为每个探索分组填写名称。');
+    }
+    if (draft.settings.assembly.enabled && !draft.settings.assembly.movingGroupIds.length) {
+      assemblyList.querySelector('input')?.focus();
+      throw new Error('启用“观察装配”时，请至少选择一个要移动的分组。');
+    }
+    const distance = draft.settings.assembly.distanceMm;
+    if (draft.settings.assembly.enabled && (!Number.isFinite(distance) || distance < 1 || distance > 1000)) {
+      body.querySelector('#editor-assembly-distance')?.focus();
+      throw new Error('装配最大移动距离须介于 1 至 1000 mm。');
+    }
+  }
+  function updateMergeButton() {
+    mergeButton.textContent = selectedGroups.size ? `合并所选（${selectedGroups.size}）` : '合并所选';
+    mergeButton.disabled = selectedGroups.size < 2;
+  }
+  function updateAssemblyNames(group) {
+    const name = group.name.trim() || '未命名分组';
+    if (moveLabels.has(group.id)) moveLabels.get(group.id).textContent = name;
+    if (hideLabels.has(group.id)) hideLabels.get(group.id).textContent = name;
+  }
+  function changeGroups(change) {
+    // Group helpers normalize persisted settings. Keep unfinished form controls
+    // (for example enabled assembly before selecting its moving groups) intact.
+    const { enabled, axis, direction, distanceMm } = draft.settings.assembly;
+    const glassOpacity = draft.settings.glassOpacity;
+    draft.settings = change(draft.settings);
+    Object.assign(draft.settings.assembly, { enabled, axis, direction, distanceMm });
+    draft.settings.glassOpacity = glassOpacity;
+  }
+  function renderGroups() {
+    const meshNames = new Map(context.meshes.map(mesh => [mesh.id, mesh.name]));
+    groupList.replaceChildren();
+    draft.settings.groups.forEach((group, index) => {
+      const card = el('section', 'editor-group');
+      card.dataset.groupId = group.id;
+      const top = el('div', 'editor-group-heading');
+      const select = el('input');
+      select.type = 'checkbox';
+      select.checked = selectedGroups.has(group.id);
+      select.dataset.selectGroup = group.id;
+      select.addEventListener('change', () => {
+        if (select.checked) selectedGroups.add(group.id);
+        else selectedGroups.delete(group.id);
+        updateMergeButton();
+      });
+      const choice = el('label', 'editor-check');
+      choice.append(select, el('span', '', `选择分组 ${String(index + 1).padStart(2, '0')}`));
+      top.append(choice, el('span', 'editor-count', `${group.meshIds.length} 个网格`));
+      card.append(top);
+      const row = el('div', 'editor-group-row');
+      const name = el('input');
+      name.type = 'text';
+      name.maxLength = 80;
+      name.value = group.name;
+      name.dataset.groupName = group.id;
+      name.addEventListener('input', () => { group.name = name.value; updateAssemblyNames(group); });
+      const preset = optionSelect(PRESETS, group.preset);
+      preset.dataset.groupPreset = group.id;
+      preset.addEventListener('change', () => { group.preset = preset.value; });
+      row.append(labeled('部件名称', name), labeled('展示材质', preset));
+      card.append(row);
+      const description = el('input');
+      description.type = 'text';
+      description.maxLength = 300;
+      description.placeholder = '例如：连接瓶身与两根导管';
+      description.value = group.description || '';
+      description.dataset.groupDescription = group.id;
+      description.addEventListener('input', () => { group.description = description.value; });
+      card.append(labeled('部件说明（可选）', description));
+      const lower = el('div', 'editor-group-bottom');
+      const details = el('details', 'editor-members');
+      details.append(el('summary', '', '包含的原始网格'));
+      const members = el('ul');
+      for (const id of group.meshIds) members.append(el('li', '', meshNames.get(id) || id));
+      details.append(members);
+      lower.append(details);
+      if (group.meshIds.length > 1) {
+        const split = button('拆分分组', 'editor-text-button', () => {
+          changeGroups(settings => splitGroup(settings, group.id, context.meshes));
+          selectedGroups.delete(group.id);
+          renderGroups();
+          renderAssembly();
+          status('已拆成独立网格分组。保存后生效。');
+        });
+        split.dataset.splitGroup = group.id;
+        lower.append(split);
+      }
+      card.append(lower);
+      groupList.append(card);
+    });
+    updateMergeButton();
+  }
+  function renderAssembly() {
+    assemblyList.replaceChildren();
+    moveLabels = new Map();
+    hideLabels = new Map();
+    const makeChoices = (titleText, property, targetMap) => {
+      const section = el('fieldset', 'editor-choice-section');
+      section.append(el('legend', '', titleText));
+      for (const group of draft.settings.groups) {
+        const input = el('input');
+        input.type = 'checkbox';
+        input.checked = draft.settings.assembly[property].includes(group.id);
+        input.dataset.assemblyGroup = group.id;
+        input.dataset.assemblyRole = property;
+        input.addEventListener('change', () => {
+          const selection = new Set(draft.settings.assembly[property]);
+          if (input.checked) selection.add(group.id);
+          else selection.delete(group.id);
+          draft.settings.assembly[property] = [...selection];
+        });
+        const name = el('span', '', group.name.trim() || '未命名分组');
+        const label = el('label', 'editor-check');
+        label.append(input, name);
+        targetMap.set(group.id, name);
+        section.append(label);
+      }
+      return section;
+    };
+    assemblyList.append(
+      makeChoices('一起移动的分组', 'movingGroupIds', moveLabels),
+      makeChoices('可用开关隐藏的分组（可选）', 'hiddenGroupIds', hideLabels),
+    );
+  }
+  function render() {
+    body.replaceChildren();
+    const identity = el('section', 'editor-section editor-identity');
+    identity.append(el('h3', '', '模型信息'));
+    nameInput = el('input');
+    nameInput.id = 'editor-model-name';
+    nameInput.type = 'text';
+    nameInput.maxLength = 80;
+    nameInput.value = draft.name;
+    nameInput.addEventListener('input', () => { draft.name = nameInput.value; });
+    const description = el('textarea');
+    description.id = 'editor-model-description';
+    description.rows = 2;
+    description.maxLength = 300;
+    description.value = draft.description;
+    description.placeholder = '显示在模型标题下方';
+    description.addEventListener('input', () => { draft.description = description.value; });
+    identity.append(labeled('模型名称', nameInput), labeled('模型说明（可选）', description));
+    body.append(identity);
+
+    const groups = el('section', 'editor-section');
+    const groupHeading = el('div', 'editor-section-heading');
+    groupHeading.append(el('h3', '', '探索分组'));
+    mergeButton = button('合并所选', 'editor-button', () => {
+      if (selectedGroups.size < 2) return;
+      changeGroups(settings => mergeGroups(settings, [...selectedGroups]));
+      selectedGroups.clear();
+      renderGroups();
+      renderAssembly();
+      status('已合并为一个探索分组，点击时会一起高亮。可继续修改名称和材质。');
+    });
+    mergeButton.id = 'editor-merge-groups';
+    groupHeading.append(mergeButton);
+    groups.append(groupHeading, el('p', 'editor-help', '选中多个分组后合并，点击时一起高亮。原始网格保持可拆分；标记文字可保留原始材质。'));
+    groupList = el('div', 'editor-group-list');
+    groupList.id = 'editor-group-list';
+    groups.append(groupList);
+    const glass = el('div', 'editor-glass');
+    const range = el('input');
+    range.id = 'editor-glass-opacity';
+    range.type = 'range';
+    range.min = '0.04';
+    range.max = '0.85';
+    range.step = '0.01';
+    range.value = draft.settings.glassOpacity;
+    const output = el('output', 'editor-value', Number(range.value).toFixed(2));
+    output.htmlFor = range.id;
+    const rangeTitle = el('div', 'editor-range-title');
+    const rangeLabel = el('label', '', '玻璃不透明度');
+    rangeLabel.htmlFor = range.id;
+    rangeTitle.append(rangeLabel, output);
+    range.addEventListener('input', () => {
+      draft.settings.glassOpacity = Number(range.value);
+      output.textContent = Number(range.value).toFixed(2);
+    });
+    glass.append(rangeTitle, range, el('p', 'editor-help', '数值越小越透明。用于透明／磨砂玻璃及自动识别出的玻璃，原始材质不受影响。'));
+    groups.append(glass);
+    body.append(groups);
+
+    const assembly = el('section', 'editor-section');
+    const assemblyHeading = el('div', 'editor-section-heading');
+    assemblyHeading.append(el('h3', '', '观察装配'));
+    const enabled = el('input');
+    enabled.id = 'editor-assembly-enabled';
+    enabled.type = 'checkbox';
+    enabled.setAttribute('role', 'switch');
+    enabled.checked = draft.settings.assembly.enabled;
+    const toggle = el('label', 'editor-check editor-enable');
+    toggle.append(enabled, el('span', '', '在页面显示此功能'));
+    assemblyHeading.append(toggle);
+    assembly.append(assemblyHeading, el('p', 'editor-help', '让选定分组沿一个方向一起移开。关闭后，访客页面会隐藏装配控制。'));
+    assemblyFields = el('fieldset', 'editor-assembly-fields');
+    assemblyFields.disabled = !enabled.checked;
+    enabled.addEventListener('change', () => {
+      draft.settings.assembly.enabled = enabled.checked;
+      assemblyFields.disabled = !enabled.checked;
+    });
+    const assemblyRow = el('div', 'editor-assembly-row');
+    const axis = optionSelect([['y', 'Y · 上下'], ['x', 'X · 左右'], ['z', 'Z · 前后']], draft.settings.assembly.axis);
+    axis.id = 'editor-assembly-axis';
+    axis.addEventListener('change', () => { draft.settings.assembly.axis = axis.value; });
+    const direction = optionSelect([['1', '正方向（＋）'], ['-1', '反方向（－）']], String(draft.settings.assembly.direction));
+    direction.id = 'editor-assembly-direction';
+    direction.addEventListener('change', () => { draft.settings.assembly.direction = Number(direction.value); });
+    const distance = el('input');
+    distance.id = 'editor-assembly-distance';
+    distance.type = 'number';
+    distance.min = '1';
+    distance.max = '1000';
+    distance.step = '1';
+    distance.value = draft.settings.assembly.distanceMm;
+    distance.addEventListener('input', () => { draft.settings.assembly.distanceMm = distance.valueAsNumber; });
+    assemblyRow.append(labeled('移动轴', axis), labeled('移动方向', direction), labeled('最大移动距离（mm）', distance));
+    assemblyList = el('div', 'editor-assembly-groups');
+    assemblyList.id = 'editor-assembly-groups';
+    assemblyFields.append(assemblyRow, assemblyList);
+    assembly.append(assemblyFields);
+    body.append(assembly);
+    renderGroups();
+    renderAssembly();
+  }
+
+  async function preview() {
+    if (working || isBusy() || !onPreview) return;
+    try {
+      validate();
+      busy(true);
+      previewed = true;
+      await onPreview(normalized());
+      status('预览已应用到模型。保存会保留设置；取消会恢复编辑前的效果。');
+    } catch (error) {
+      status(error?.message || '暂时无法预览，请重试。', true);
+    } finally { busy(false); }
+  }
+  async function cancel() {
+    if (working) return;
+    try {
+      if (previewed && onPreview) {
+        busy(true);
+        await onPreview(copy(originalSettings));
+      }
+      dialog.close();
+      previewed = false;
+    } catch (error) {
+      status(error?.message || '恢复预览失败，请重试。', true);
+    } finally { busy(false); }
+  }
+  form.addEventListener('submit', async event => {
+    event.preventDefault();
+    if (working) return;
+    if (isBusy()) { status('模型正在处理，请稍后再保存。', true); return; }
+    try {
+      validate();
+      busy(true);
+      status('正在保存…');
+      const settings = normalized();
+      await onSave({ name: draft.name.trim(), description: draft.description.trim(), settings });
+      previewed = false;
+      dialog.close();
+    } catch (error) {
+      status(error?.message || '保存失败，修改仍保留在此窗口，请重试。', true);
+    } finally { busy(false); }
+  });
+  dialog.addEventListener('cancel', event => { event.preventDefault(); cancel(); });
+
+  return {
+    open() {
+      if (dialog.open || isBusy()) return false;
+      context = getContext();
+      if (!context?.entry || !Array.isArray(context.meshes) || !context.meshes.length) return false;
+      originalSettings = normalizeModelSettings(context.settings, context.meshes, { profile: context.entry.profile });
+      draft = {
+        name: context.entry.name || '',
+        description: context.entry.description || '',
+        settings: copy(originalSettings),
+      };
+      selectedGroups = new Set();
+      previewed = false;
+      busy(false);
+      render();
+      status('修改只在保存后生效。合并分组可以随时拆分。');
+      dialog.showModal();
+      nameInput.focus();
+      return true;
+    },
+    isOpen: () => dialog.open,
+  };
+}

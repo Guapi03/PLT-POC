@@ -16,7 +16,7 @@ export async function buildWebsiteArchive({files,models,defaultId,getBytes,fetch
   archive[path]=new Uint8Array(await fetchAsset(path));
  }
  const catalog=[];let total=0;
- for(const item of models){if(!/^[a-zA-Z0-9_-]+$/.test(item.id))throw new Error('模型编号无效。');const buffer=await getBytes(item);total+=buffer.byteLength;if(total>110*1024*1024)throw new Error('当前模型总量过大，请减少模型后导出。');const src=`assets/${item.id}.glb`;archive[src]=new Uint8Array(buffer);catalog.push({id:item.id,name:item.name,src,profile:item.profile||'generic',description:item.description||''});}
+ for(const item of models){if(!/^[a-zA-Z0-9_-]+$/.test(item.id))throw new Error('模型编号无效。');const buffer=await getBytes(item);total+=buffer.byteLength;if(total>110*1024*1024)throw new Error('当前模型总量过大，请减少模型后导出。');const src=`assets/${item.id}.glb`;archive[src]=new Uint8Array(buffer);const entry={id:item.id,name:item.name,src,profile:item.profile||'generic',description:item.description||''};if(item.settings!==undefined)entry.settings=JSON.parse(JSON.stringify(item.settings));catalog.push(entry);}
  if(!catalog.length)throw new Error('没有可以导出的模型。');
  archive['models.json']=strToU8(JSON.stringify({version:1,defaultId:catalog.some(m=>m.id===defaultId)?defaultId:catalog[0].id,models:catalog},null,2));
  return zipSync(archive,{level:1});

@@ -6,7 +6,7 @@
   <title>Glass Lab — 玻璃仪器 3D / AR</title>
   <meta name="description" content="探索玻璃洗涤瓶的结构，抬起上盖查看内部，并在支持的手机上以 AR 放到桌面。">
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%2310191e'/%3E%3Cpath d='M12 6h8m-6 0v9L7 25h18l-7-10V6' fill='none' stroke='%237be6cc' stroke-width='2' stroke-linejoin='round'/%3E%3C/svg%3E">
-  <link rel="stylesheet" href="./style.css?v=library-2">
+  <link rel="stylesheet" href="./style.css?v=editor-1">
   <script type="importmap">{"imports":{"three":"./vendor/three/build/three.module.js","three/addons/":"./vendor/three/examples/jsm/"}}</script>
 </head>
 <body>
@@ -16,12 +16,12 @@
       <div class="specimen"><p class="eyebrow">SPECIMEN 001</p><h1 id="model-title">气体洗涤瓶</h1><p class="spec" id="model-subtitle">500 mL <span>／</span> 24/29 磨口</p></div>
       <div id="canvas-host" tabindex="0" aria-label="三维模型，拖动旋转，滚动或双指缩放"></div>
       <div class="loading" id="loading" role="status"><div class="spinner"></div><span id="load-message">正在载入玻璃仪器…</span><button class="text-button" id="retry" hidden>重新载入</button></div>
-      <div class="view-tools" role="group" aria-label="模型显示方式"><button class="view-choice active" data-view="glass" aria-pressed="true">玻璃</button><button class="view-choice" data-view="solid" aria-pressed="false">结构</button></div>
+      <div class="view-tools" role="group" aria-label="模型显示方式"><button class="view-choice active" data-view="glass" aria-pressed="true">玻璃</button><button class="view-choice" data-view="original" aria-pressed="false">原始</button><button class="view-choice" data-view="solid" aria-pressed="false">结构</button></div>
       <div class="viewer-bottom"><span id="viewer-hint">拖动旋转 · 滚动缩放 · 点击部件</span><button id="reset-camera" class="text-button">重置视角 ↺</button></div>
       <span class="scale-note" id="scale-note">模型载入中</span>
     </section>
     <aside class="panel" aria-label="模型操作面板">
-      <section class="model-selector-section"><label for="model-select">当前模型</label><select id="model-select" disabled><option>气体洗涤瓶</option></select><button id="add-model" class="text-button">＋ 添加配件模型</button></section>
+      <section class="model-selector-section"><label for="model-select">当前模型</label><select id="model-select" disabled><option>气体洗涤瓶</option></select><div class="model-actions"><button id="add-model" class="text-button">＋ 添加配件模型</button><button id="edit-model" class="text-button" disabled>编辑模型 ↗</button></div></section>
       <section class="control-section">
         <div class="section-heading"><h2>探索部件</h2><span id="part-count" class="section-index">01—04</span></div>
         <div id="part-list" class="part-list" role="group" aria-label="选择模型部件">
@@ -33,11 +33,11 @@
         <div class="part-detail" aria-live="polite"><span id="detail-title">从外形，看到内部。</span><p id="detail-copy">选择一个部件，查看它的位置与作用。</p></div>
       </section>
       <section id="assembly-section" class="control-section assembly-controls">
-        <div class="section-heading"><h2>观察装配</h2><button class="text-button" id="assembly-toggle">抬起上盖 ↑</button></div>
-        <label class="range-label" for="lift">上盖抬起 <output id="lift-value" for="lift">0 <small>mm</small></output></label>
-        <input id="lift" type="range" min="0" max="180" value="0" step="1" aria-label="上盖抬起距离，单位毫米">
-        <div class="range-marks" aria-hidden="true"><span>组装</span><span>180 mm</span></div>
-        <label class="switch-row"><span>隐藏瓶身，观察导管</span><input id="hide-bottle" type="checkbox" role="switch"><span class="switch-track" aria-hidden="true"></span></label>
+        <div class="section-heading"><h2>观察装配</h2><button class="text-button" id="assembly-toggle">展开部件 ↑</button></div>
+        <label class="range-label" for="lift">部件位移 <output id="lift-value" for="lift">0 <small>mm</small></output></label>
+        <input id="lift" type="range" min="0" max="180" value="0" step="1" aria-label="装配部件位移，单位毫米">
+        <div class="range-marks" aria-hidden="true"><span>组装</span><span id="lift-max">180 mm</span></div>
+        <label class="switch-row" id="hide-parts-row"><span id="hide-parts-label">隐藏瓶身，观察导管</span><input id="hide-bottle" type="checkbox" role="switch"><span class="switch-track" aria-hidden="true"></span></label>
         
       </section>
       <label class="switch-row rotate-row"><span>自动旋转</span><input id="auto-rotate" type="checkbox" role="switch"><span class="switch-track" aria-hidden="true"></span></label>
@@ -60,7 +60,7 @@
   <dialog id="ar-dialog" aria-labelledby="ar-title"><button class="dialog-close" id="close-ar" aria-label="关闭 AR 说明">×</button><p class="eyebrow">AUGMENTED REALITY</p><h2 id="ar-title">在你的空间里查看</h2><p id="ar-description"></p><div id="ar-progress" hidden class="dialog-progress"><span class="spinner"></span><span>正在准备当前模型…</span></div><button id="start-webxr" class="primary-button" hidden>打开相机并放置</button><a id="quicklook-link" rel="ar" hidden aria-label="在 iPhone AR 中打开当前模型"><img alt="在相机中查看" width="320" height="52"></a><div id="desktop-help" hidden><label for="site-link">手机打开这个地址</label><input id="site-link" readonly><button id="copy-link" class="secondary-button">复制链接</button></div><p id="ar-feedback" class="dialog-feedback" role="status"></p><p class="dialog-footnote">AR 使用近似半透明玻璃；实际效果以手机显示为准。</p></dialog>
   <div id="xr-overlay" hidden><div class="xr-top"><span id="xr-status">缓慢移动手机，寻找桌面</span><button id="exit-ar">退出 AR</button></div><div class="xr-bottom"><button id="place-model" disabled>找到桌面后放置</button><button id="replace-model" hidden>重新放置</button></div></div>
   <noscript><p class="no-script">此页面需要 JavaScript 来显示三维模型。</p></noscript>
-  <script type="module" src="./main.js?v=library-2"></script>
+  <script type="module" src="./main.js?v=editor-1"></script>
   <script type="module">const d=document.querySelector('#library-dialog');document.querySelector('#open-library').onclick=()=>d.showModal();document.querySelector('#add-model').onclick=()=>d.showModal();document.querySelector('#close-library').onclick=()=>d.close();</script>
 </body>
 </html>

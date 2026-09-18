@@ -1,7 +1,8 @@
 import { USDZExporter } from 'three/addons/exporters/USDZExporter.js';
 import { FrontSide } from 'three';
+import { applyMaterialAppearance } from './appearance.js';
 
-export async function exportARModel(product,originals,{profile='bottle'}={}){
+export async function exportARModel(product,originals,{profile='bottle',settings}={}){
   const clone=product.clone(true),materials=[];
   const sources=[];product.traverse(obj=>{if(obj.isMesh)sources.push(obj);});
   let index=0;
@@ -9,7 +10,8 @@ export async function exportARModel(product,originals,{profile='bottle'}={}){
     if(!obj.isMesh)return;
     const source=sources[index++];const cloned=[].concat(originals.get(source)?.material||source.material).map(base=>{
       const m=base.clone();materials.push(m);m.side=FrontSide;
-      if(m.transmission>0){m.transmission=0;m.opacity=profile==='bottle'?(obj.userData.part==='head'?.65:.28):.3;m.transparent=true;m.depthWrite=false;
+      if(settings){const group=settings.groups.find(g=>g.id===source.userData.part);applyMaterialAppearance(m,base,{preset:group?.preset||'auto',glassOpacity:settings.glassOpacity,arMode:true});m.side=FrontSide;}
+      else if(m.transmission>0){m.transmission=0;m.opacity=profile==='bottle'?(obj.userData.part==='head'?.65:.28):.3;m.transparent=true;m.depthWrite=false;
         if(profile==='bottle'){m.roughness=obj.userData.part==='head'?.5:.18;m.color.set(0xc8ebec);}}
       return m;
     });obj.material=cloned.length===1?cloned[0]:cloned;
@@ -42,7 +44,7 @@ export function setupAR(api){
     if(preparing)return preparing;
     const currentVersion=version;
     preparing=(async()=>{
-      const bytes=await exportARModel(product,originals,{profile:state.profile});
+      const bytes=await exportARModel(product,originals,{profile:state.profile,settings:state.settings});
       if(currentVersion!==version)throw new Error('模型已变化，请重新打开 AR。');
       const url=URL.createObjectURL(new Blob([bytes],{type:'model/vnd.usdz+zip'}));if(cachedURL)URL.revokeObjectURL(cachedURL);cachedURL=url;cachedVersion=currentVersion;return url;
     })();

@@ -6,6 +6,7 @@
 @media(prefers-reduced-motion:reduce){*{animation-duration:.001ms!important;transition:none!important}}
 
 /* Keep the model visible while the longer control panel scrolls. */
+.model-actions{display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap}.model-actions #edit-model{border:1px solid #47645e;border-radius:5px;padding:7px 10px}.view-choice{padding-left:12px;padding-right:12px}
 @media(min-width:621px){.viewer{position:sticky;top:0;align-self:start;height:calc(100svh - 76px);min-height:540px;max-height:none}}
 @media(min-width:621px) and (max-width:850px){.viewer{height:calc(100svh - 64px)}}
 

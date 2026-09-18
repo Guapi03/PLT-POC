@@ -14,6 +14,25 @@ export async function setupLibrary({activate,getActive,isBusy,onBusyChange=()=>{
   function feedback(text,error=false,target='#library-feedback'){const el=$(target);el.textContent=text;el.classList.toggle('error',error);}
   function errorText(error){return error?.name==='QuotaExceededError'?'浏览器存储空间不足，请移除不需要的模型后重试。':error.message||'操作失败，请重试。';}
   async function getBytes(entry){if(entry.blob)return entry.blob.arrayBuffer();const r=await fetch('./'+entry.src);if(!r.ok)throw new Error('无法读取模型文件：'+entry.name);return r.arrayBuffer();}
+  async function updateEntry(id,patch={}){
+    if(busy||isBusy())throw new Error('请等待当前操作完成，或先退出 AR。');
+    const item=records.get(id);if(!item||item.deleted)throw new Error('找不到这个模型。');
+    const updated={...item};
+    if(Object.hasOwn(patch,'name')){
+      if(typeof patch.name!=='string'||!patch.name.trim())throw new Error('请输入模型名称。');
+      const name=patch.name.trim();if(name.length>80)throw new Error('模型名称最多 80 个字符。');updated.name=name;
+    }
+    if(Object.hasOwn(patch,'description')){
+      if(typeof patch.description!=='string')throw new Error('请输入有效的模型说明。');
+      const description=patch.description.trim();if(description.length>300)throw new Error('模型说明最多 300 个字符。');updated.description=description;
+    }
+    if(Object.hasOwn(patch,'settings')){
+      try{updated.settings=JSON.parse(JSON.stringify(patch.settings));}catch{throw new Error('模型设置无法保存，请检查后重试。');}
+    }
+    busy=true;setButtons();
+    try{await store.put(updated);records.set(id,updated);render();return updated;}
+    finally{busy=false;setButtons();}
+  }
   async function choose(id,{close=false,prepared}={}){
     if((busy||isBusy())&&!prepared)throw new Error('请等待当前操作完成，或先退出 AR。');
     const item=records.get(id);if(!item||item.deleted)throw new Error('找不到这个模型。');
@@ -40,7 +59,7 @@ export async function setupLibrary({activate,getActive,isBusy,onBusyChange=()=>{
       button('改名',()=>{
         if(busy||isBusy())return;
         const input=document.createElement('input');input.maxLength=80;input.value=item.name;input.setAttribute('aria-label','新的模型名称');title.replaceWith(input);actions.replaceChildren();
-        const save=button('保存',async()=>{if(busy||isBusy())return;const name=input.value.trim();if(!name){feedback('请输入模型名称。',true);return;}busy=true;setButtons();try{const updated={...item,name};await store.put(updated);records.set(item.id,updated);if(getActive()?.id===item.id){$('#model-title').textContent=name;getActive().name=name;}render();feedback('名称已保存。');}finally{busy=false;setButtons();}});
+        const save=button('保存',async()=>{if(busy||isBusy())return;const updated=await updateEntry(item.id,{name:input.value});if(getActive()?.id===item.id){$('#model-title').textContent=updated.name;getActive().name=updated.name;}feedback('名称已保存。');});
         button('取消',render);input.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();save.click();}if(e.key==='Escape'){e.preventDefault();render();}});input.focus();input.select();
       });
       if(item.id!=='glass-bottle'&&items.length>1)button('移除',()=>{
@@ -91,5 +110,5 @@ export async function setupLibrary({activate,getActive,isBusy,onBusyChange=()=>{
   if(!store.persistent)feedback('浏览器存储不可用，模型只在本次页面中保留。请在关闭页面前导出网站包。',true);
   else feedback('保存在当前浏览器。清除网站数据会移除本地模型，请用导出网站包备份。');
   render();const initial=records.get(manifest.defaultId);await choose(initial&&!initial.deleted?initial.id:entries()[0]?.id);
-  return {list:()=>entries().map(({id,name,profile})=>({id,name,profile})),choose,getBytes,render};
+  return {list:()=>entries().map(({id,name,profile,settings})=>({id,name,profile,hasSettings:settings!=null})),choose,getBytes,render,updateEntry};
 }
