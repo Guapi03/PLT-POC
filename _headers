@@ -1,0 +1,7 @@
+/*
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+  Permissions-Policy: camera=(self), xr-spatial-tracking=(self)
+
+/assets/*.glb
+  Content-Type: model/gltf-binary
