@@ -1,6 +1,11 @@
-import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm'
+import { createClient } from '@supabase/supabase-js'
 
-const supabaseUrl = 'https://your-project-id.supabase.co'
-const supabaseAnonKey = 'your-anon-key'
+// Vite 环境下使用 import.meta.env 读取环境变量
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
+
+if (!supabaseUrl || !supabaseAnonKey) {
+    console.error('Supabase 环境变量未配置或未读取到！')
+}
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey)
