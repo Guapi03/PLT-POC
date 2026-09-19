@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "defaultId": "model-935a0ec7-1495-4429-b20e-6d2b09e5e9cc",
+  "defaultId": "model-27de5d0b-4d8e-4091-8984-a682facb79e9",
   "models": [
     {
       "id": "glass-bottle",
@@ -51,9 +51,9 @@
       }
     },
     {
-      "id": "model-537dc45b-a66a-4f1b-ad82-376c21bc0f79",
+      "id": "model-27de5d0b-4d8e-4091-8984-a682facb79e9",
       "name": "Multiple Adapter Three-Way Connector",
-      "src": "assets/model-537dc45b-a66a-4f1b-ad82-376c21bc0f79.glb",
+      "src": "assets/model-27de5d0b-4d8e-4091-8984-a682facb79e9.glb",
       "profile": "generic",
       "description": "3-Way Adapter 19/26×2-24/29",
       "settings": {
@@ -70,8 +70,8 @@
           },
           {
             "id": "g-1",
-            "name": "Joint-24/29-Bottom",
-            "description": "Bottom vertical joint, 24/29 standard ground-glass fitting, used for connecting to the main apparatus",
+            "name": "Joint-1926-Side",
+            "description": "Side-angled joint, 19/26 standard ground-glass fitting",
             "meshIds": [
               "mesh-1"
             ],
@@ -79,7 +79,7 @@
           },
           {
             "id": "g-2",
-            "name": "Joint-19/26-Top",
+            "name": "Joint-1926-Top",
             "description": "Top vertical joint, 19/26 standard ground-glass fitting",
             "meshIds": [
               "mesh-2"
@@ -88,65 +88,8 @@
           },
           {
             "id": "g-3",
-            "name": "Joint-19/26-Side",
-            "description": "Side-angled joint, 19/26 standard ground-glass fitting",
-            "meshIds": [
-              "mesh-3"
-            ],
-            "preset": "auto"
-          }
-        ],
-        "glassOpacity": 0.18,
-        "assembly": {
-          "enabled": false,
-          "movingGroupIds": [],
-          "hiddenGroupIds": [],
-          "axis": "y",
-          "direction": 1,
-          "distanceMm": 180
-        }
-      }
-    },
-    {
-      "id": "model-935a0ec7-1495-4429-b20e-6d2b09e5e9cc",
-      "name": "Multiple Adapter Three-Way Connector2",
-      "src": "assets/model-935a0ec7-1495-4429-b20e-6d2b09e5e9cc.glb",
-      "profile": "generic",
-      "description": "3-Way Adapter 19/26×2-24/29",
-      "settings": {
-        "version": 1,
-        "groups": [
-          {
-            "id": "g-0",
-            "name": "Body",
-            "description": "Main glass body connecting the three joint fittings",
-            "meshIds": [
-              "mesh-0"
-            ],
-            "preset": "auto"
-          },
-          {
-            "id": "g-1",
-            "name": "Joint-24/29-Bottom",
+            "name": "Joint-2429-Bottom",
             "description": "Bottom vertical joint, 24/29 standard ground-glass fitting, used for connecting to the main apparatus",
-            "meshIds": [
-              "mesh-1"
-            ],
-            "preset": "auto"
-          },
-          {
-            "id": "g-2",
-            "name": "Joint-19/26-Top",
-            "description": "Top vertical joint, 19/26 standard ground-glass fitting",
-            "meshIds": [
-              "mesh-2"
-            ],
-            "preset": "auto"
-          },
-          {
-            "id": "g-3",
-            "name": "Joint-19/26-Side",
-            "description": "Side-angled joint, 19/26 standard ground-glass fitting",
             "meshIds": [
               "mesh-3"
             ],
