@@ -93,11 +93,13 @@ export function setupModelEditor({ getContext, onSave, onPreview, isBusy = () =>
   const previewButton = button('预览设置', 'editor-button', () => preview());
   previewButton.id = 'model-editor-preview';
   previewButton.hidden = typeof onPreview !== 'function';
+
+  // 修改保存按钮：点击时直接执行 JavaScript 提交，避免触发原生的 DOM正则校验报错
   const saveButton = button('保存设置', 'editor-button editor-primary', () => {
-    form.requestSubmit(); // 强制触发 form 的 submit 事件
+    handleFormSubmit();
   });
   saveButton.id = 'model-editor-save';
-  saveButton.type = 'submit';
+
   actions.append(cancelButton, previewButton, saveButton);
   footer.append(feedback, actions);
   form.append(header, fields, footer);
@@ -136,14 +138,25 @@ export function setupModelEditor({ getContext, onSave, onPreview, isBusy = () =>
       });
       throw new Error('请为每个探索分组填写名称。');
     }
-    if (draft.settings.assembly.enabled && !draft.settings.assembly.movingGroupIds.length) {
-      assemblyList.querySelector('input')?.focus();
-      throw new Error('启用“观察装配”时，请至少选择一个要移动的分组。');
+
+    // 确保 glassOpacity 为有效数字类型
+    if (draft.settings.glassOpacity !== undefined) {
+      draft.settings.glassOpacity = Number(draft.settings.glassOpacity) || 0.18;
     }
-    const distance = draft.settings.assembly.distanceMm;
-    if (draft.settings.assembly.enabled && (!Number.isFinite(distance) || distance < 1 || distance > 1000)) {
-      body.querySelector('#editor-assembly-distance')?.focus();
-      throw new Error('装配最大移动距离须介于 1 至 1000 mm。');
+
+    // 严谨校验 distanceMm：做数字强制转换，防止空字符串或 NaN
+    if (draft.settings.assembly.enabled) {
+      if (!draft.settings.assembly.movingGroupIds.length) {
+        assemblyList.querySelector('input')?.focus();
+        throw new Error('启用“观察装配”时，请至少选择一个要移动的分组。');
+      }
+
+      const distVal = Number(draft.settings.assembly.distanceMm);
+      if (!Number.isFinite(distVal) || distVal < 1 || distVal > 1000) {
+        body.querySelector('#editor-assembly-distance')?.focus();
+        throw new Error('装配最大移动距离须介于 1 至 1000 mm。');
+      }
+      draft.settings.assembly.distanceMm = distVal;
     }
   }
   function updateMergeButton() {
@@ -348,7 +361,9 @@ export function setupModelEditor({ getContext, onSave, onPreview, isBusy = () =>
     distance.max = '1000';
     distance.step = '1';
     distance.value = draft.settings.assembly.distanceMm;
-    distance.addEventListener('input', () => { draft.settings.assembly.distanceMm = distance.valueAsNumber; });
+    distance.addEventListener('input', () => {
+      draft.settings.assembly.distanceMm = Number(distance.value);
+    });
     assemblyRow.append(labeled('移动轴', axis), labeled('移动方向', direction), labeled('最大移动距离（mm）', distance));
     assemblyList = el('div', 'editor-assembly-groups');
     assemblyList.id = 'editor-assembly-groups';
@@ -385,11 +400,9 @@ export function setupModelEditor({ getContext, onSave, onPreview, isBusy = () =>
     } finally { busy(false); }
   }
 
-  // 重点修改：提交表单时将配置数据通过 POST 方式同步写入云端 PostgreSQL 数据库
-  form.addEventListener('submit', async event => {
-    event.preventDefault();
-    console.log("👉 [调试] 保存设置按钮被点击，开始处理提交数据！"); // 👈 加这行调试日志
-
+  // 抽出独立的提交处理函数，规避原生的 pattern 正则校验机制
+  async function handleFormSubmit() {
+    console.log("👉 [调试] 保存设置被触发，正在准备数据...");
     if (working) return;
     if (isBusy()) {
       console.warn("⚠️ [调试] isBusy() 返回了 true，保存被拦截");
@@ -408,14 +421,13 @@ export function setupModelEditor({ getContext, onSave, onPreview, isBusy = () =>
         settings
       };
 
-      // 获取 ID，如果 context 中没有找到，退回到默认字符串
       const modelId = context?.entry?.id || 'default_model';
-      console.log("👉 [调试] 发送请求给 /api/models，ID:", modelId, "Payload:", payload);
+      console.log("👉 [调试] 准备保存模型，ID:", modelId, " Payload:", payload);
 
-      // 1. 发送 HTTP POST 请求写入后端 PostgreSQL
+      // 1. 发送 HTTP POST 请求写入后端 PostgreSQL 数据库
       await saveModelToDatabase(modelId, payload.name, payload);
 
-      // 2. 如果页面外部注册了 onSave 钩子，同样进行本地数据流更新
+      // 2. 如果页面外部注册了 onSave 回调，同样进行本地数据同步
       if (typeof onSave === 'function') {
         await onSave(payload);
       }
@@ -424,11 +436,16 @@ export function setupModelEditor({ getContext, onSave, onPreview, isBusy = () =>
       status('保存成功！数据已成功写入数据库。');
       setTimeout(() => dialog.close(), 600);
     } catch (error) {
-      console.error("❌ [保存报错]", error); // 👈 打印详细报错
+      console.error("❌ [保存失败原因]:", error);
       status(error?.message || '保存失败，修改仍保留在此窗口，请重试。', true);
     } finally {
       busy(false);
     }
+  }
+
+  form.addEventListener('submit', async event => {
+    event.preventDefault();
+    handleFormSubmit();
   });
   dialog.addEventListener('cancel', event => { event.preventDefault(); cancel(); });
 
