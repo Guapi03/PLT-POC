@@ -34,6 +34,27 @@ function optionSelect(options, value) {
   return select;
 }
 
+/**
+ * 后端数据库 API 通信函数：保存数据至 PostgreSQL 数据库
+ */
+async function saveModelToDatabase(id, name, config) {
+  const response = await fetch('/api/models', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      id: id,         // 唯一标识（通常对应 context.entry.id）
+      name: name,     // 模型名称
+      config: config  // 模型详细参数与材质/分组设置
+    })
+  });
+
+  const result = await response.json();
+  if (!response.ok || !result.success) {
+    throw new Error(result.error || '保存至数据库失败');
+  }
+  return result.data;
+}
+
 /** A draft editor. The caller owns persistence and the currently displayed model. */
 export function setupModelEditor({ getContext, onSave, onPreview, isBusy = () => false }) {
   const cssURL = new URL('./model-editor.css', import.meta.url).href;
@@ -53,7 +74,7 @@ export function setupModelEditor({ getContext, onSave, onPreview, isBusy = () =>
   heading.append(el('p', 'eyebrow', 'MODEL SETTINGS'));
   const title = el('h2', '', '编辑模型');
   title.id = 'model-editor-title';
-  heading.append(title, el('p', 'editor-intro', '设置展示材质、探索分组与装配动作。保存后会随网站包一起导出。'));
+  heading.append(title, el('p', 'editor-intro', '设置展示材质、探索分组与装配动作。保存后会自动同步至 PostgreSQL 数据库。'));
   const close = button('×', 'editor-close', () => cancel());
   close.id = 'model-editor-close';
   close.setAttribute('aria-label', '取消并关闭编辑');
@@ -133,8 +154,6 @@ export function setupModelEditor({ getContext, onSave, onPreview, isBusy = () =>
     if (hideLabels.has(group.id)) hideLabels.get(group.id).textContent = name;
   }
   function changeGroups(change) {
-    // Group helpers normalize persisted settings. Keep unfinished form controls
-    // (for example enabled assembly before selecting its moving groups) intact.
     const { enabled, axis, direction, distanceMm } = draft.settings.assembly;
     const glassOpacity = draft.settings.glassOpacity;
     draft.settings = change(draft.settings);
@@ -232,8 +251,8 @@ export function setupModelEditor({ getContext, onSave, onPreview, isBusy = () =>
       return section;
     };
     assemblyList.append(
-      makeChoices('一起移动的分组', 'movingGroupIds', moveLabels),
-      makeChoices('可用开关隐藏的分组（可选）', 'hiddenGroupIds', hideLabels),
+        makeChoices('一起移动的分组', 'movingGroupIds', moveLabels),
+        makeChoices('可用开关隐藏的分组（可选）', 'hiddenGroupIds', hideLabels),
     );
   }
   function render() {
@@ -363,6 +382,8 @@ export function setupModelEditor({ getContext, onSave, onPreview, isBusy = () =>
       status(error?.message || '恢复预览失败，请重试。', true);
     } finally { busy(false); }
   }
+
+  // 重点修改：提交表单时将配置数据通过 POST 方式同步写入云端 PostgreSQL 数据库
   form.addEventListener('submit', async event => {
     event.preventDefault();
     if (working) return;
@@ -370,11 +391,26 @@ export function setupModelEditor({ getContext, onSave, onPreview, isBusy = () =>
     try {
       validate();
       busy(true);
-      status('正在保存…');
+      status('正在保存至数据库…');
       const settings = normalized();
-      await onSave({ name: draft.name.trim(), description: draft.description.trim(), settings });
+      const payload = {
+        name: draft.name.trim(),
+        description: draft.description.trim(),
+        settings
+      };
+
+      // 1. 发送 HTTP POST 请求写入后端 PostgreSQL
+      const modelId = context.entry.id || 'default_model';
+      await saveModelToDatabase(modelId, payload.name, payload);
+
+      // 2. 如果页面外部注册了 onSave 钩子，同样进行本地数据流更新
+      if (typeof onSave === 'function') {
+        await onSave(payload);
+      }
+
       previewed = false;
-      dialog.close();
+      status('保存成功！数据已成功写入数据库。');
+      setTimeout(() => dialog.close(), 600);
     } catch (error) {
       status(error?.message || '保存失败，修改仍保留在此窗口，请重试。', true);
     } finally { busy(false); }
