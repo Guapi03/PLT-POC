@@ -30,7 +30,6 @@
 </header>
 <main class="workspace">
   <section class="viewer" aria-label="可交互的三维模型">
-    <!-- SPECIMEN 字样已移除，排列整体向上提 -->
     <div class="specimen">
       <h1 id="model-title">气体洗涤瓶</h1>
       <p class="spec" id="model-subtitle">500 mL <span>／</span> 24/29 磨口</p>
@@ -93,6 +92,13 @@
     </div>
   </div>
 
+  <!-- 💻 PC 端强行对齐 3 列的表头 -->
+  <div class="library-table-header">
+    <div>模型名称</div>
+    <div>分类 / 类型</div>
+    <div style="text-align: right;">操作</div>
+  </div>
+
   <!-- 数据库模型列表核心显示区 -->
   <div class="library-full-list-container">
     <section class="library-inventory" aria-label="模型列表" style="width: 100%;">
@@ -112,26 +118,39 @@
     <button id="close-upload" class="dialog-close" aria-label="关闭添加模型弹窗">×</button>
   </div>
 
-  <div class="import-panel" style="width: 100%; max-width: 520px; margin: 0 auto; padding: 10px 0;">
+  <div class="import-panel" style="width: 100%; max-width: 540px; margin: 0 auto; padding: 20px 24px;">
     <form id="import-form">
+      <!-- 拖拽上传文件区域 -->
       <label class="drop-zone" id="drop-zone" for="model-file">
-        <span class="upload-symbol" aria-hidden="true">＋</span>
-        <strong id="file-caption">选择或拖入 GLB 文件</strong>
-        <span>包含贴图的单个 .glb · 最大 25 MiB</span>
+        <span class="upload-symbol" aria-hidden="true" style="font-size: 24px; line-height: 1;">＋</span>
+        <strong id="file-caption" style="font-size: 15px; margin: 4px 0;">选择或拖入 GLB 文件</strong>
+        <span style="font-size: 12px; color: var(--muted);">包含贴图的单个 .glb · 最大 25 MiB</span>
         <input id="model-file" type="file" accept=".glb,model/gltf-binary" required>
       </label>
 
-      <label class="field-label" for="import-name">模型名称</label>
-      <input id="import-name" maxlength="80" placeholder="例如：玻璃漏斗" required>
+      <!-- 双列完美表单，解决 Input 与 Select 错位混淆问题 -->
+      <div class="add-form-group">
+        <div class="add-form-row">
+          <div class="add-form-field">
+            <label for="import-name">模型名称</label>
+            <input id="import-name" type="text" maxlength="80" placeholder="例如：玻璃漏斗" required>
+          </div>
 
-      <label class="field-label" for="import-category">模型类型 / 分类</label>
-      <select id="import-category" class="styled-select">
-        <!-- 由 JS 从 Supabase 动态加载 -->
-      </select>
-      <button id="import-submit" class="primary-button" type="submit">上传模型</button>
+          <div class="add-form-field">
+            <label for="import-category">模型类型 / 分类</label>
+            <select id="import-category" class="styled-select">
+              <!-- 由 JS 从 Supabase 动态加载 -->
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <button id="import-submit" class="primary-button" type="submit" style="margin-top: 8px;">上传模型</button>
     </form>
     <p id="import-feedback" class="library-feedback" role="status"></p>
-    <p class="library-tip">以 Blender 中导出的米制尺寸展示。当前版本支持静态、未压缩的 GLB 模型。</p>
+    <p class="library-tip" style="margin-top: 16px; font-size: 12px; color: #738a96; line-height: 1.6;">
+      以 Blender 中导出的米制尺寸展示。当前版本支持静态、未压缩的 GLB 模型。
+    </p>
   </div>
 </dialog>
 
