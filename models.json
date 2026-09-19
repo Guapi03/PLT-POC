@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "defaultId": "model-27de5d0b-4d8e-4091-8984-a682facb79e9",
+  "defaultId": "model-bc80c15a-cc25-4942-8516-da770d94a7aa",
   "models": [
     {
       "id": "glass-bottle",
@@ -106,6 +106,13 @@
           "distanceMm": 180
         }
       }
+    },
+    {
+      "id": "model-bc80c15a-cc25-4942-8516-da770d94a7aa",
+      "name": "Untitled",
+      "src": "assets/model-bc80c15a-cc25-4942-8516-da770d94a7aa.glb",
+      "profile": "generic",
+      "description": "导入的配件模型"
     }
   ]
 }
