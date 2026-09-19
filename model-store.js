@@ -97,23 +97,10 @@ export async function setupLibrary({ activate, getActive, isBusy, onBusyChange }
         return sortState.direction === 'asc' ? '↓' : '↑';
     }
 
-    // 渲染表头 Header
+    // 渲染表头 Header（样式交给 CSS 的 .library-table-header 类控制）
     function renderHeader(container) {
         const header = document.createElement('div');
-        header.style.cssText = `
-            display: grid;
-            grid-template-columns: 1fr 160px 220px;
-            align-items: center;
-            padding: 8px 16px;
-            margin-bottom: 8px;
-            background: rgba(255, 255, 255, 0.04);
-            border-radius: 6px;
-            font-size: 12px;
-            font-weight: 600;
-            color: #8a9ba8;
-            user-select: none;
-            box-sizing: border-box;
-        `;
+        header.className = 'library-table-header';
 
         const nameHeader = document.createElement('div');
         nameHeader.style.cssText = `cursor: pointer; display: flex; align-items: center; gap: 4px;`;
@@ -135,7 +122,7 @@ export async function setupLibrary({ activate, getActive, isBusy, onBusyChange }
         container.appendChild(header);
     }
 
-    // 渲染模型列表
+    // 渲染模型列表（使用外部 CSS 类名控制）
     function renderList() {
         const listEl = $('#library-list');
         if (!listEl) return;
@@ -160,70 +147,35 @@ export async function setupLibrary({ activate, getActive, isBusy, onBusyChange }
             const active = getActive();
             const isActive = active && String(active.id) === String(model.id);
 
+            // 卡片容器：使用 .library-entry 类
             const item = document.createElement('div');
-            item.style.cssText = `
-                display: grid;
-                grid-template-columns: 1fr 160px 220px;
-                align-items: center;
-                padding: 10px 16px;
-                margin-bottom: 8px;
-                height: 58px;
-                box-sizing: border-box;
-                background: ${isActive ? 'rgba(123, 230, 204, 0.08)' : 'rgba(255, 255, 255, 0.03)'};
-                border: 1px solid ${isActive ? '#7be6cc' : 'rgba(255, 255, 255, 0.08)'};
-                border-radius: 8px;
-                gap: 12px;
-            `;
+            item.className = `library-entry ${isActive ? 'active' : ''}`;
+
+            // 第一部分：Name + Category 组合容器（适合手机端两行排版的顶部）
+            const topGroup = document.createElement('div');
+            topGroup.className = 'library-entry-top';
 
             // 1. Name 显示
-            const nameEl = document.createElement('div');
-            nameEl.style.cssText = `
-                font-weight: 600;
-                font-size: 13px;
-                color: ${isActive ? '#7be6cc' : '#e6f4f1'};
-                overflow: hidden;
-                text-overflow: ellipsis;
-                white-space: nowrap;
-            `;
+            const nameEl = document.createElement('h3');
             nameEl.textContent = model.name;
 
             // 2. Category 显示
-            const catEl = document.createElement('div');
-            catEl.style.cssText = `
-                font-size: 12px;
-                color: #8a9ba8;
-                overflow: hidden;
-                text-overflow: ellipsis;
-                white-space: nowrap;
-            `;
+            const catEl = document.createElement('span');
+            catEl.className = 'category-badge';
             catEl.textContent = model.category || model.profile || 'Non-builded';
 
-            // 3. 操作按钮组
+            topGroup.appendChild(nameEl);
+            topGroup.appendChild(catEl);
+
+            // 3. 操作按钮组：使用 .library-actions 类
             const actionGroup = document.createElement('div');
-            actionGroup.style.cssText = `
-                display: flex;
-                gap: 6px;
-                justify-content: flex-end;
-                align-items: center;
-                width: 220px;
-            `;
+            actionGroup.className = 'library-actions';
 
             // 使用 / 当前使用 按钮
             const useBtn = document.createElement('button');
-            useBtn.style.cssText = `
-                height: 32px;
-                padding: 0 10px;
-                font-size: 12px;
-                font-weight: 600;
-                border-radius: 4px;
-                cursor: ${isActive ? 'default' : 'pointer'};
-                border: ${isActive ? 'none' : '1px solid #7be6cc'};
-                background: ${isActive ? '#7be6cc' : 'transparent'};
-                color: ${isActive ? '#10191e' : '#7be6cc'};
-                transition: all 0.2s ease;
-                white-space: nowrap;
-                box-sizing: border-box;
-            `;
+            if (isActive) {
+                useBtn.className = 'primary';
+            }
             useBtn.textContent = isActive ? '当前使用' : '使用';
             useBtn.disabled = isActive;
 
@@ -234,19 +186,6 @@ export async function setupLibrary({ activate, getActive, isBusy, onBusyChange }
 
             // 编辑按钮
             const editBtn = document.createElement('button');
-            editBtn.style.cssText = `
-                height: 32px;
-                padding: 0 10px;
-                font-size: 12px;
-                border-radius: 4px;
-                border: 1px solid rgba(123, 230, 204, 0.4);
-                background: transparent;
-                color: #7be6cc;
-                cursor: pointer;
-                white-space: nowrap;
-                box-sizing: border-box;
-                transition: all 0.2s ease;
-            `;
             editBtn.textContent = '编辑';
 
             editBtn.onclick = async () => {
@@ -261,19 +200,7 @@ export async function setupLibrary({ activate, getActive, isBusy, onBusyChange }
 
             // 删除按钮
             const delBtn = document.createElement('button');
-            delBtn.style.cssText = `
-                height: 32px;
-                padding: 0 10px;
-                font-size: 12px;
-                border-radius: 4px;
-                border: 1px solid rgba(255, 85, 85, 0.4);
-                background: transparent;
-                color: #ff6b6b;
-                cursor: pointer;
-                transition: all 0.2s ease;
-                white-space: nowrap;
-                box-sizing: border-box;
-            `;
+            delBtn.className = 'danger';
             delBtn.textContent = '删除';
 
             delBtn.onclick = async (e) => {
@@ -306,8 +233,8 @@ export async function setupLibrary({ activate, getActive, isBusy, onBusyChange }
             actionGroup.appendChild(editBtn);
             actionGroup.appendChild(delBtn);
 
-            item.appendChild(nameEl);
-            item.appendChild(catEl);
+            // 把组组装到 item 中
+            item.appendChild(topGroup);
             item.appendChild(actionGroup);
 
             listEl.appendChild(item);
