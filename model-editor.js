@@ -93,7 +93,9 @@ export function setupModelEditor({ getContext, onSave, onPreview, isBusy = () =>
   const previewButton = button('预览设置', 'editor-button', () => preview());
   previewButton.id = 'model-editor-preview';
   previewButton.hidden = typeof onPreview !== 'function';
-  const saveButton = button('保存设置', 'editor-button editor-primary');
+  const saveButton = button('保存设置', 'editor-button editor-primary', () => {
+    form.requestSubmit(); // 强制触发 form 的 submit 事件
+  });
   saveButton.id = 'model-editor-save';
   saveButton.type = 'submit';
   actions.append(cancelButton, previewButton, saveButton);
