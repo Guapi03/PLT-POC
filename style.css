@@ -634,22 +634,34 @@ dialog::backdrop {
     backdrop-filter: blur(6px);
 }
 
+/* 🎯 修复：固定右上角 X 关闭按钮的大小与位置 */
 .dialog-close {
     position: absolute;
-    right: 18px;
-    top: 18px;
-    background: none;
-    border: 0;
-    font-size: 24px;
+    right: 16px;
+    top: 16px;
+    width: 32px !important;
+    height: 32px !important;
+    min-width: 32px !important;
+    min-height: 32px !important;
+    background: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 6px;
+    font-size: 16px;
+    line-height: 1;
     color: #abc1cc;
-    padding: 4px 8px;
+    padding: 0;
     cursor: pointer;
     z-index: 10;
-    transition: color 0.15s;
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s ease;
 }
 
 .dialog-close:hover {
     color: #fff;
+    border-color: rgba(255, 255, 255, 0.4);
+    background: rgba(255, 255, 255, 0.05);
 }
 
 dialog h2 {
@@ -810,7 +822,7 @@ body.xr-active .header, body.xr-active .workspace {
 }
 
 /* ==========================================
-   模型库弹窗 (#library-dialog) 响应式适配
+   模型库弹窗 (#library-dialog) 样式规范
    ========================================== */
 
 dialog.library-dialog:not([open]) {
@@ -925,7 +937,7 @@ dialog.library-dialog[open] {
     border-color: var(--mint);
 }
 
-/* 表头分类字段说明 (Grid 对齐) */
+/* 表头分类 (PC端展示) */
 .library-table-header {
     display: grid;
     grid-template-columns: 2fr 1fr 140px;
@@ -937,10 +949,6 @@ dialog.library-dialog[open] {
     font-size: 12px;
     color: #6a8491;
     flex-shrink: 0;
-}
-
-.library-table-header span:last-child {
-    text-align: right;
 }
 
 /* 核心滚动视口 */
@@ -960,7 +968,7 @@ dialog.library-dialog[open] {
     scrollbar-width: thin;
 }
 
-/* 单条列表行 (使用 Grid 严格与表头对齐) */
+/* PC 端默认 Grid 结构 */
 .library-entry {
     display: grid !important;
     grid-template-columns: 2fr 1fr 140px;
@@ -986,7 +994,6 @@ dialog.library-dialog[open] {
     box-shadow: 0 0 12px rgba(123, 230, 204, 0.08) !important;
 }
 
-/* 列表左侧标题 */
 .library-entry-header {
     display: flex;
     flex-direction: column;
@@ -1275,7 +1282,7 @@ dialog.library-dialog[open] {
     }
 }
 
-/* 移动端/手机端专用优化 (Max-Width 620px) */
+/* 📱 手机端专用优化 (Max-Width 620px) */
 @media (max-width: 620px) {
     .header {
         padding: 0 12px;
@@ -1409,7 +1416,7 @@ dialog.library-dialog[open] {
         overflow-wrap: anywhere;
     }
 
-    /* 移动端模型库 Modal 弹窗优化 */
+    /* 🎯 手机端模型库：简化表头 & 优化卡片布局 */
     dialog.library-dialog {
         width: calc(100% - 16px);
         height: calc(100svh - 24px);
@@ -1419,40 +1426,74 @@ dialog.library-dialog[open] {
     .library-heading {
         padding: 14px 16px 10px;
     }
+    .library-heading h2 {
+        font-size: 18px;
+    }
     .library-filter-bar {
         padding: 10px 16px;
         flex-direction: column;
         align-items: stretch;
         gap: 8px;
     }
+
+    /* 手机端表头：只保留 Name 和 Category */
     .library-table-header {
-        grid-template-columns: 1fr 1fr 80px;
+        display: flex !important;
+        justify-content: space-between !important;
         padding: 8px 16px;
         font-size: 11px;
     }
+    .library-table-header span:last-child {
+        display: none; /* 隐藏手机端的“操作”表头文字 */
+    }
+
     .library-grid, .library-inventory {
         padding: 12px 14px 20px !important;
     }
+
+    /* 🎯 手机端卡片结构：改为 2 行 Flex 布局 */
     .library-entry {
-        grid-template-columns: 1fr 1fr 100px !important;
-        gap: 8px !important;
-        padding: 12px 12px !important;
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: stretch !important;
+        gap: 10px !important;
+        padding: 12px 14px !important;
     }
+
+    /* 第一行：左边名称，右边分类标签 */
+    .library-entry-top {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        width: 100%;
+    }
+
     .library-entry h3 {
-        font-size: 13px;
+        font-size: 14px;
     }
+
     .category-badge {
         font-size: 11px;
-        padding: 2px 6px;
+        padding: 2px 8px;
     }
+
+    /* 第二行：操作按钮整行排列 */
     .library-actions {
-        width: 100%;
-        justify-content: flex-end;
+        width: 100% !important;
+        display: flex !important;
+        justify-content: flex-end !important;
+        gap: 8px !important;
+        border-top: 1px solid rgba(255, 255, 255, 0.05);
+        padding-top: 8px;
     }
+
     .library-actions button {
-        height: 28px;
-        padding: 0 8px;
-        font-size: 11px;
+        height: 30px;
+        padding: 0 10px;
+        font-size: 12px;
+        flex: 1; /* 按钮按宽度均匀分布 */
+        max-width: 100px;
+        text-align: center;
     }
 }
 
