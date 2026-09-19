@@ -1,74 +1,141 @@
-.model-editor{width:min(860px,calc(100% - 32px));max-height:min(92svh,1020px);padding:0;background:#14242c;border:1px solid #425c65;border-radius:16px;overflow:hidden;color:var(--text,#eff7f7)}
-.model-editor::backdrop{background:#071015a8;backdrop-filter:blur(3px)}
-.model-editor-form{display:flex;flex-direction:column;max-height:min(92svh,1020px);margin:0}
-.editor-header{position:relative;padding:26px 32px 21px;border-bottom:1px solid #304850;flex-shrink:0}
-.editor-header .eyebrow{font-size:10px;margin:0 0 6px;letter-spacing:2px}
-.model-editor .editor-header h2{font-size:25px;margin:0 42px 8px; margin-left:0;font-weight:500}
-.editor-intro,.editor-help{color:#9fb7c1;font-size:13px;line-height:1.75;margin:0}
-.editor-intro{padding-right:20px;max-width:650px}
-.editor-close{position:absolute;top:19px;right:20px;display:grid;place-items:center;min-width:38px;min-height:38px;border:0;border-radius:7px;background:transparent;color:#b8ccd4;font-size:25px}
-.editor-close:hover{background:#2b414b}
-.editor-fields{border:0;padding:0;margin:0;min-width:0;overflow:auto;flex:1;overscroll-behavior:contain;scrollbar-color:#506975 #172932;scrollbar-width:thin}
-.editor-body{padding:0 32px 28px}
-.editor-section{padding-top:25px;margin-top:25px;border-top:1px solid #304850}
-.editor-section:first-child{margin-top:0;border-top:0}
-.model-editor h3{font-size:16px;margin:0 0 15px;font-weight:600}
-.editor-section-heading{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:12px;flex-wrap:wrap}
-.editor-section-heading h3{margin:0}
-.editor-field{display:flex;flex-direction:column;gap:7px;min-width:0;margin:0 0 14px}
-.editor-field-title{font-size:12px;color:#a9c1ca;line-height:1.5}
-.model-editor input[type=text],.model-editor input[type=number],.model-editor textarea,.model-editor select{width:100%;min-height:42px;border:1px solid #3f5b67;border-radius:6px;background:#0e1c23;color:#f1f8f8;font:inherit;font-size:14px;padding:10px 11px;box-shadow:none}
-.model-editor textarea{resize:vertical;min-height:68px;line-height:1.6}
-.model-editor input::placeholder,.model-editor textarea::placeholder{color:#6c8793}
-.model-editor input[type=checkbox]{width:17px;height:17px;flex-shrink:0;margin:0;accent-color:var(--mint,#7be6cc);cursor:pointer}
-.model-editor input[type=range]{margin:8px 0 4px;accent-color:var(--mint,#7be6cc)}
-.model-editor :is(button,input,textarea,select,summary):focus-visible{outline:2px solid var(--mint,#7be6cc);outline-offset:3px}
-.model-editor button{font:inherit;font-size:13px;touch-action:manipulation;cursor:pointer}
-.model-editor button:disabled{cursor:default;opacity:.4}
-.editor-button{padding:10px 15px;min-height:40px;border:1px solid #42606b;background:#233d47;color:#dff1f5;border-radius:6px;line-height:1.3}
-.editor-button:hover:enabled{background:#304f59}
-.editor-primary{border-color:transparent;background:var(--mint,#7be6cc);color:#092a25;font-weight:600!important}
-.editor-primary:hover:enabled{background:#a6f3df}
-.editor-text-button{border:0;padding:6px 0;background:none;color:var(--mint,#7be6cc);white-space:nowrap}
-.editor-group-list{display:grid;gap:12px;margin-top:16px}
-.editor-group{padding:16px 17px 12px;background:#1a2e37;border:1px solid #304b57;border-radius:9px}
-.editor-group-heading{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:14px}
-.editor-count{font-size:11px;color:#8ba8b5;white-space:nowrap}
-.editor-check{display:flex;align-items:center;gap:9px;min-height:28px;font-size:13px;line-height:1.5;cursor:pointer;min-width:0}
-.editor-check span{overflow-wrap:anywhere;min-width:0}
-.editor-group-row{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(160px,1fr);gap:16px}
-.editor-group-bottom{display:flex;justify-content:space-between;align-items:flex-start;gap:20px}
-.editor-members{min-width:0;font-size:11px;color:#91acb7;line-height:1.7}
-.editor-members summary{cursor:pointer;min-height:30px;padding:5px 0;user-select:none}
-.editor-members ul{padding-left:18px;margin:5px 0 8px;overflow-wrap:anywhere}
-.editor-members li+li{margin-top:5px}
-.editor-glass{padding:20px 0 0}
-.editor-range-title{display:flex;justify-content:space-between;align-items:center;gap:20px;font-size:13px}
-.editor-value{font-variant-numeric:tabular-nums;font-family:'IBM Plex Mono',monospace;color:var(--mint,#7be6cc)}
-.editor-enable{color:var(--mint,#7be6cc)}
-.editor-assembly-fields{padding:18px 0 0;margin:0;border:0;min-width:0;transition:opacity .15s}
-.editor-assembly-fields:disabled{opacity:.38}
-.editor-assembly-fields:disabled input,.editor-assembly-fields:disabled label{cursor:default}
-.editor-assembly-row{display:grid;grid-template-columns:1fr 1fr 1.1fr;gap:14px}
-.editor-assembly-groups{display:grid;grid-template-columns:1fr 1fr;gap:16px}
-.editor-choice-section{border:1px solid #304b57;min-width:0;border-radius:8px;padding:9px 14px 13px;margin:2px 0 0;background:#172a32}
-.editor-choice-section legend{font-size:12px;color:#a9c1ca;padding:0 5px}
-.editor-choice-section .editor-check{padding:6px 0}
-.editor-footer{display:flex;align-items:center;justify-content:space-between;gap:20px;flex-shrink:0;padding:18px 32px;border-top:1px solid #304850;background:#14242c}
-.editor-feedback{font-size:12px;color:#a8c4ce;line-height:1.65;margin:0;max-width:360px}
-.editor-feedback.error{color:#ffc1ad}
-.editor-actions{display:flex;align-items:center;gap:9px;flex-shrink:0}
-.editor-footer .editor-primary{min-width:96px}
-@media(max-width:620px){
- .model-editor{width:calc(100% - 16px);max-height:calc(100svh - 24px);border-radius:12px}
- .model-editor-form{max-height:calc(100svh - 24px)}
- .editor-header{padding:21px 20px 17px}.editor-header .eyebrow{font-size:9px}.model-editor .editor-header h2{font-size:22px}
- .editor-intro{font-size:12px}.editor-close{top:13px;right:12px}
- .editor-body{padding:0 18px 23px}.editor-section{padding-top:22px;margin-top:22px}
- .editor-group{padding:14px 13px 10px}.editor-group-row{grid-template-columns:1fr;gap:0}
- .model-editor input[type=text],.model-editor input[type=number],.model-editor textarea,.model-editor select{font-size:16px}
- .editor-assembly-row{grid-template-columns:1fr 1fr;gap:0 12px}.editor-assembly-row .editor-field:last-child{grid-column:1/-1}
- .editor-assembly-groups{grid-template-columns:1fr;gap:14px}.editor-footer{padding:15px 18px;flex-direction:column;align-items:stretch;gap:12px}
- .editor-feedback{max-width:none;min-height:20px}.editor-actions{justify-content:flex-end}.editor-actions button{flex:1;padding:11px 7px}
- .editor-enable{font-size:12px}.editor-section-heading{gap:10px}.editor-help{font-size:12px}
+/* 强制纠正 dialog 盒模型与 Flex 布局计算 */
+dialog.model-editor {
+ width: min(860px, calc(100% - 32px));
+ height: min(92svh, 1020px);
+ max-height: min(92svh, 1020px);
+ padding: 0;
+ background: #14242c;
+ border: 1px solid #425c65;
+ border-radius: 16px;
+ overflow: hidden;
+ color: var(--text, #eff7f7);
+ box-sizing: border-box;
+}
+
+dialog.model-editor::backdrop {
+ background: #071015a8;
+ backdrop-filter: blur(3px);
+}
+
+/* 关键修复：确保表单容器充满 dialog 并限制最小高度为 0，防止被内容撑开 */
+.model-editor-form {
+ display: flex !important;
+ flex-direction: column !important;
+ height: 100% !important;
+ max-height: 100% !important;
+ min-height: 0 !important;
+ margin: 0 !important;
+ padding: 0 !important;
+ overflow: hidden !important;
+}
+
+.editor-header {
+ position: relative;
+ padding: 26px 32px 21px;
+ border-bottom: 1px solid #304850;
+ flex-shrink: 0;
+}
+.editor-header .eyebrow { font-size: 10px; margin: 0 0 6px; letter-spacing: 2px; }
+.model-editor .editor-header h2 { font-size: 25px; margin: 0 42px 8px 0; font-weight: 500; }
+.editor-intro, .editor-help { color: #9fb7c1; font-size: 13px; line-height: 1.75; margin: 0; }
+.editor-intro { padding-right: 20px; max-width: 650px; }
+.editor-close {
+ position: absolute; top: 19px; right: 20px;
+ display: grid; place-items: center;
+ min-width: 38px; min-height: 38px;
+ border: 0; border-radius: 7px;
+ background: transparent; color: #b8ccd4; font-size: 25px;
+}
+.editor-close:hover { background: #2b414b; }
+
+/* 关键修复：强制开启中间视口区域的纵向独立滚动 */
+.editor-fields {
+ border: 0 !important;
+ padding: 0 !important;
+ margin: 0 !important;
+ min-width: 0 !important;
+ min-height: 0 !important;
+ flex: 1 1 auto !important;
+ overflow-y: auto !important;
+ overflow-x: hidden !important;
+ overscroll-behavior: contain;
+ scrollbar-color: #506975 #172932;
+ scrollbar-width: thin;
+}
+
+.editor-body { padding: 0 32px 28px; }
+.editor-section { padding-top: 25px; margin-top: 25px; border-top: 1px solid #304850; }
+.editor-section:first-child { margin-top: 0; border-top: 0; }
+.model-editor h3 { font-size: 16px; margin: 0 0 15px; font-weight: 600; }
+.editor-section-heading { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 12px; flex-wrap: wrap; }
+.editor-section-heading h3 { margin: 0; }
+.editor-field { display: flex; flex-direction: column; gap: 7px; min-width: 0; margin: 0 0 14px; }
+.editor-field-title { font-size: 12px; color: #a9c1ca; line-height: 1.5; }
+
+.model-editor input[type=text], .model-editor input[type=number], .model-editor textarea, .model-editor select {
+ width: 100%; min-height: 42px; border: 1px solid #3f5b67; border-radius: 6px;
+ background: #0e1c23; color: #f1f8f8; font: inherit; font-size: 14px; padding: 10px 11px; box-shadow: none;
+}
+.model-editor textarea { resize: vertical; min-height: 68px; line-height: 1.6; }
+.model-editor input::placeholder, .model-editor textarea::placeholder { color: #6c8793; }
+.model-editor input[type=checkbox] { width: 17px; height: 17px; flex-shrink: 0; margin: 0; accent-color: var(--mint,#7be6cc); cursor: pointer; }
+.model-editor input[type=range] { margin: 8px 0 4px; accent-color: var(--mint,#7be6cc); }
+.model-editor :is(button,input,textarea,select,summary):focus-visible { outline: 2px solid var(--mint,#7be6cc); outline-offset: 3px; }
+.model-editor button { font: inherit; font-size: 13px; touch-action: manipulation; cursor: pointer; }
+.model-editor button:disabled { cursor: default; opacity: .4; }
+
+.editor-button { padding: 10px 15px; min-height: 40px; border: 1px solid #42606b; background: #233d47; color: #dff1f5; border-radius: 6px; line-height: 1.3; }
+.editor-button:hover:enabled { background: #304f59; }
+.editor-primary { border-color: transparent; background: var(--mint,#7be6cc); color: #092a25; font-weight: 600!important; }
+.editor-primary:hover:enabled { background: #a6f3df; }
+.editor-text-button { border: 0; padding: 6px 0; background: none; color: var(--mint,#7be6cc); white-space: nowrap; }
+
+.editor-group-list { display: grid; gap: 12px; margin-top: 16px; }
+.editor-group { padding: 16px 17px 12px; background: #1a2e37; border: 1px solid #304b57; border-radius: 9px; }
+.editor-group-heading { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 14px; }
+.editor-count { font-size: 11px; color: #8ba8b5; white-space: nowrap; }
+.editor-check { display: flex; align-items: center; gap: 9px; min-height: 28px; font-size: 13px; line-height: 1.5; cursor: pointer; min-width: 0; }
+.editor-check span { overflow-wrap: anywhere; min-width: 0; }
+.editor-group-row { display: grid; grid-template-columns: minmax(0,1.4fr) minmax(160px,1fr); gap: 16px; }
+.editor-group-bottom { display: flex; justify-content: space-between; align-items: flex-start; gap: 20px; }
+.editor-members { min-width: 0; font-size: 11px; color: #91acb7; line-height: 1.7; }
+.editor-members summary { cursor: pointer; min-height: 30px; padding: 5px 0; user-select: none; }
+.editor-members ul { padding-left: 18px; margin: 5px 0 8px; overflow-wrap: anywhere; }
+.editor-members li+li { margin-top: 5px; }
+
+.editor-glass { padding: 20px 0 0; }
+.editor-range-title { display: flex; justify-content: space-between; align-items: center; gap: 20px; font-size: 13px; }
+.editor-value { font-variant-numeric: tabular-nums; font-family: 'IBM Plex Mono',monospace; color: var(--mint,#7be6cc); }
+.editor-enable { color: var(--mint,#7be6cc); }
+
+.editor-assembly-fields { padding: 18px 0 0; margin: 0; border: 0; min-width: 0; transition: opacity .15s; }
+.editor-assembly-fields:disabled { opacity: .38; }
+.editor-assembly-fields:disabled input, .editor-assembly-fields:disabled label { cursor: default; }
+.editor-assembly-row { display: grid; grid-template-columns: 1fr 1fr 1.1fr; gap: 14px; }
+.editor-assembly-groups { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+
+.editor-choice-section { border: 1px solid #304b57; min-width: 0; border-radius: 8px; padding: 9px 14px 13px; margin: 2px 0 0; background: #172a32; }
+.editor-choice-section legend { font-size: 12px; color: #a9c1ca; padding: 0 5px; }
+.editor-choice-section .editor-check { padding: 6px 0; }
+
+.editor-footer {
+ display: flex; align-items: center; justify-content: space-between; gap: 20px;
+ flex-shrink: 0; padding: 18px 32px; border-top: 1px solid #304850; background: #14242c;
+}
+.editor-feedback { font-size: 12px; color: #a8c4ce; line-height: 1.65; margin: 0; max-width: 360px; }
+.editor-feedback.error { color: #ffc1ad; }
+.editor-actions { display: flex; align-items: center; gap: 9px; flex-shrink: 0; }
+.editor-footer .editor-primary { min-width: 96px; }
+
+@media(max-width:620px) {
+ dialog.model-editor { width: calc(100% - 16px); height: calc(100svh - 24px); max-height: calc(100svh - 24px); border-radius: 12px; }
+ .editor-header { padding: 21px 20px 17px; } .editor-header .eyebrow { font-size: 9px; } .model-editor .editor-header h2 { font-size: 22px; }
+ .editor-intro { font-size: 12px; } .editor-close { top: 13px; right: 12px; }
+ .editor-body { padding: 0 18px 23px; } .editor-section { padding-top: 22px; margin-top: 22px; }
+ .editor-group { padding: 14px 13px 10px; } .editor-group-row { grid-template-columns: 1fr; gap: 0; }
+ .model-editor input[type=text], .model-editor input[type=number], .model-editor textarea, .model-editor select { font-size: 16px; }
+ .editor-assembly-row { grid-template-columns: 1fr 1fr; gap: 0 12px; } .editor-assembly-row .editor-field:last-child { grid-column: 1/-1; }
+ .editor-assembly-groups { grid-template-columns: 1fr; gap: 14px; } .editor-footer { padding: 15px 18px; flex-direction: column; align-items: stretch; gap: 12px; }
+ .editor-feedback { max-width: none; min-height: 20px; } .editor-actions { justify-content: flex-end; } .editor-actions button { flex: 1; padding: 11px 7px; }
+ .editor-enable { font-size: 12px; } .editor-section-heading { gap: 10px; } .editor-help { font-size: 12px; }
 }

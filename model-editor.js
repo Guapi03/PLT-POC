@@ -4,6 +4,14 @@ const PRESETS = [
   ['auto', '自动识别'], ['original', '原始材质'], ['glass', '透明玻璃'],
   ['frosted', '磨砂玻璃'], ['solid', '不透明材质'],
 ];
+
+// 默认基础分类选项（若未连接/加载 Supabase 时的降级备用）
+let categoryOptions = [
+  ['Adapters', 'Adapters'],
+  ['Bottles', 'Bottles'],
+  ['Non-builded', 'Non-builded']
+];
+
 const copy = value => JSON.parse(JSON.stringify(value));
 
 function el(tag, className, text) {
@@ -34,8 +42,33 @@ function optionSelect(options, value) {
   return select;
 }
 
-/** A draft editor. The caller owns persistence and the currently displayed model. */
-export function setupModelEditor({ getContext, onSave, onPreview, isBusy = () => false }) {
+/**
+ * 填充下拉选择框（优先从 Supabase RPC 读取全量分类）
+ */
+export async function populateCategoryOptions(selectElement, selectedValue = 'Non-builded', supabaseClient = window.supabase) {
+  if (!selectElement) return;
+
+  try {
+    if (supabaseClient && typeof supabaseClient.rpc === 'function') {
+      const { data: categories, error } = await supabaseClient.rpc('get_model_category_enum');
+      if (!error && Array.isArray(categories) && categories.length > 0) {
+        categoryOptions = categories.map(cat => [cat, cat]);
+      }
+    }
+  } catch (err) {
+    console.warn('获取 Supabase 枚举失败，使用默认分类选项:', err);
+  }
+
+  selectElement.innerHTML = '';
+  for (const [key, label] of categoryOptions) {
+    const option = el('option', '', label);
+    option.value = key;
+    if (key === selectedValue) option.selected = true;
+    selectElement.append(option);
+  }
+}
+
+export function setupModelEditor({ getContext, onSave, isBusy = () => false }) {
   const cssURL = new URL('./model-editor.css', import.meta.url).href;
   if (![...document.querySelectorAll('link[rel="stylesheet"]')].some(link => link.href === cssURL)) {
     const link = el('link');
@@ -58,9 +91,11 @@ export function setupModelEditor({ getContext, onSave, onPreview, isBusy = () =>
   close.id = 'model-editor-close';
   close.setAttribute('aria-label', '取消并关闭编辑');
   header.append(heading, close);
-  const body = el('div', 'editor-body');
+
   const fields = el('fieldset', 'editor-fields');
+  const body = el('div', 'editor-body');
   fields.append(body);
+
   const footer = el('footer', 'editor-footer');
   const feedback = el('p', 'editor-feedback');
   feedback.id = 'model-editor-feedback';
@@ -69,19 +104,18 @@ export function setupModelEditor({ getContext, onSave, onPreview, isBusy = () =>
   const actions = el('div', 'editor-actions');
   const cancelButton = button('取消', 'editor-button', () => cancel());
   cancelButton.id = 'model-editor-cancel';
-  const previewButton = button('预览设置', 'editor-button', () => preview());
-  previewButton.id = 'model-editor-preview';
-  previewButton.hidden = typeof onPreview !== 'function';
+
   const saveButton = button('保存设置', 'editor-button editor-primary');
   saveButton.id = 'model-editor-save';
   saveButton.type = 'submit';
-  actions.append(cancelButton, previewButton, saveButton);
+  actions.append(cancelButton, saveButton);
   footer.append(feedback, actions);
+
   form.append(header, fields, footer);
   dialog.append(form);
   document.body.append(dialog);
 
-  let context, draft, originalSettings, working = false, previewed = false;
+  let context, draft, originalSettings, working = false;
   let selectedGroups = new Set();
   let groupList, assemblyList, mergeButton, assemblyFields, nameInput;
   let moveLabels = new Map();
@@ -94,12 +128,12 @@ export function setupModelEditor({ getContext, onSave, onPreview, isBusy = () =>
   function busy(value) {
     working = value;
     fields.disabled = value;
-    for (const node of [close, cancelButton, previewButton, saveButton]) node.disabled = value;
+    for (const node of [close, cancelButton, saveButton]) node.disabled = value;
     dialog.setAttribute('aria-busy', String(value));
     saveButton.textContent = value ? '请稍候…' : '保存设置';
   }
   function normalized() {
-    return normalizeModelSettings(copy(draft.settings), context.meshes, { profile: context.entry.profile });
+    return normalizeModelSettings(copy(draft.settings), context.meshes, { category: draft.category });
   }
   function validate() {
     if (!draft.name.trim()) {
@@ -133,8 +167,6 @@ export function setupModelEditor({ getContext, onSave, onPreview, isBusy = () =>
     if (hideLabels.has(group.id)) hideLabels.get(group.id).textContent = name;
   }
   function changeGroups(change) {
-    // Group helpers normalize persisted settings. Keep unfinished form controls
-    // (for example enabled assembly before selecting its moving groups) intact.
     const { enabled, axis, direction, distanceMm } = draft.settings.assembly;
     const glassOpacity = draft.settings.glassOpacity;
     draft.settings = change(draft.settings);
@@ -232,8 +264,8 @@ export function setupModelEditor({ getContext, onSave, onPreview, isBusy = () =>
       return section;
     };
     assemblyList.append(
-      makeChoices('一起移动的分组', 'movingGroupIds', moveLabels),
-      makeChoices('可用开关隐藏的分组（可选）', 'hiddenGroupIds', hideLabels),
+        makeChoices('一起移动的分组', 'movingGroupIds', moveLabels),
+        makeChoices('可用开关隐藏的分组（可选）', 'hiddenGroupIds', hideLabels),
     );
   }
   function render() {
@@ -246,6 +278,7 @@ export function setupModelEditor({ getContext, onSave, onPreview, isBusy = () =>
     nameInput.maxLength = 80;
     nameInput.value = draft.name;
     nameInput.addEventListener('input', () => { draft.name = nameInput.value; });
+
     const description = el('textarea');
     description.id = 'editor-model-description';
     description.rows = 2;
@@ -253,7 +286,18 @@ export function setupModelEditor({ getContext, onSave, onPreview, isBusy = () =>
     description.value = draft.description;
     description.placeholder = '显示在模型标题下方';
     description.addEventListener('input', () => { draft.description = description.value; });
-    identity.append(labeled('模型名称', nameInput), labeled('模型说明（可选）', description));
+
+    // 模型类型/分类 Select Box 下拉框
+    const categorySelect = optionSelect(categoryOptions, draft.category || 'Non-builded');
+    categorySelect.id = 'editor-model-category';
+    populateCategoryOptions(categorySelect, draft.category || 'Non-builded');
+    categorySelect.addEventListener('change', () => { draft.category = categorySelect.value; });
+
+    identity.append(
+        labeled('模型名称', nameInput),
+        labeled('模型说明（可选）', description),
+        labeled('模型类型 / 分类', categorySelect)
+    );
     body.append(identity);
 
     const groups = el('section', 'editor-section');
@@ -338,31 +382,11 @@ export function setupModelEditor({ getContext, onSave, onPreview, isBusy = () =>
     renderAssembly();
   }
 
-  async function preview() {
-    if (working || isBusy() || !onPreview) return;
-    try {
-      validate();
-      busy(true);
-      previewed = true;
-      await onPreview(normalized());
-      status('预览已应用到模型。保存会保留设置；取消会恢复编辑前的效果。');
-    } catch (error) {
-      status(error?.message || '暂时无法预览，请重试。', true);
-    } finally { busy(false); }
-  }
-  async function cancel() {
+  function cancel() {
     if (working) return;
-    try {
-      if (previewed && onPreview) {
-        busy(true);
-        await onPreview(copy(originalSettings));
-      }
-      dialog.close();
-      previewed = false;
-    } catch (error) {
-      status(error?.message || '恢复预览失败，请重试。', true);
-    } finally { busy(false); }
+    dialog.close();
   }
+
   form.addEventListener('submit', async event => {
     event.preventDefault();
     if (working) return;
@@ -372,8 +396,12 @@ export function setupModelEditor({ getContext, onSave, onPreview, isBusy = () =>
       busy(true);
       status('正在保存…');
       const settings = normalized();
-      await onSave({ name: draft.name.trim(), description: draft.description.trim(), settings });
-      previewed = false;
+      await onSave({
+        name: draft.name.trim(),
+        description: draft.description.trim(),
+        category: draft.category || 'Non-builded',
+        settings
+      });
       dialog.close();
     } catch (error) {
       status(error?.message || '保存失败，修改仍保留在此窗口，请重试。', true);
@@ -386,18 +414,19 @@ export function setupModelEditor({ getContext, onSave, onPreview, isBusy = () =>
       if (dialog.open || isBusy()) return false;
       context = getContext();
       if (!context?.entry || !Array.isArray(context.meshes) || !context.meshes.length) return false;
-      originalSettings = normalizeModelSettings(context.settings, context.meshes, { profile: context.entry.profile });
+      originalSettings = normalizeModelSettings(context.settings, context.meshes, { category: context.entry.category });
       draft = {
         name: context.entry.name || '',
         description: context.entry.description || '',
+        category: context.entry.category || 'Non-builded',
         settings: copy(originalSettings),
       };
       selectedGroups = new Set();
-      previewed = false;
       busy(false);
       render();
       status('修改只在保存后生效。合并分组可以随时拆分。');
       dialog.showModal();
+      fields.scrollTop = 0;
       nameInput.focus();
       return true;
     },
