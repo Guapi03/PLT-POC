@@ -388,8 +388,15 @@ export function setupModelEditor({ getContext, onSave, onPreview, isBusy = () =>
   // 重点修改：提交表单时将配置数据通过 POST 方式同步写入云端 PostgreSQL 数据库
   form.addEventListener('submit', async event => {
     event.preventDefault();
+    console.log("👉 [调试] 保存设置按钮被点击，开始处理提交数据！"); // 👈 加这行调试日志
+
     if (working) return;
-    if (isBusy()) { status('模型正在处理，请稍后再保存。', true); return; }
+    if (isBusy()) {
+      console.warn("⚠️ [调试] isBusy() 返回了 true，保存被拦截");
+      status('模型正在处理，请稍后再保存。', true);
+      return;
+    }
+
     try {
       validate();
       busy(true);
@@ -401,8 +408,11 @@ export function setupModelEditor({ getContext, onSave, onPreview, isBusy = () =>
         settings
       };
 
+      // 获取 ID，如果 context 中没有找到，退回到默认字符串
+      const modelId = context?.entry?.id || 'default_model';
+      console.log("👉 [调试] 发送请求给 /api/models，ID:", modelId, "Payload:", payload);
+
       // 1. 发送 HTTP POST 请求写入后端 PostgreSQL
-      const modelId = context.entry.id || 'default_model';
       await saveModelToDatabase(modelId, payload.name, payload);
 
       // 2. 如果页面外部注册了 onSave 钩子，同样进行本地数据流更新
@@ -414,8 +424,11 @@ export function setupModelEditor({ getContext, onSave, onPreview, isBusy = () =>
       status('保存成功！数据已成功写入数据库。');
       setTimeout(() => dialog.close(), 600);
     } catch (error) {
+      console.error("❌ [保存报错]", error); // 👈 打印详细报错
       status(error?.message || '保存失败，修改仍保留在此窗口，请重试。', true);
-    } finally { busy(false); }
+    } finally {
+      busy(false);
+    }
   });
   dialog.addEventListener('cancel', event => { event.preventDefault(); cancel(); });
 
