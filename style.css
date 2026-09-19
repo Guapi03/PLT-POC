@@ -57,7 +57,9 @@ button[hidden], [hidden] {
     display: none !important;
 }
 
-/* Header 顶部导航栏 */
+/* ==========================================
+   Header 顶部导航栏
+   ========================================== */
 .header {
     height: 76px;
     display: flex;
@@ -129,7 +131,6 @@ button[hidden], [hidden] {
     background: #385867;
 }
 
-/* 模型库入口按钮 */
 .library-button {
     background: #243c43;
     border: 1px solid #49635b;
@@ -183,7 +184,9 @@ button[hidden], [hidden] {
     color: #c2d0d6;
 }
 
-/* 主工作区布局 */
+/* ==========================================
+   主工作区布局
+   ========================================== */
 .workspace {
     display: grid;
     grid-template-columns: minmax(0, 1fr) 350px;
@@ -564,13 +567,6 @@ input[type=range] {
     line-height: 1;
 }
 
-.ar-section .ar-note {
-    margin: 9px 0 0 !important;
-    font-size: 11px !important;
-    color: #829ca9 !important;
-    min-height: 18px;
-}
-
 .panel-footer {
     display: flex;
     align-items: flex-start;
@@ -617,7 +613,9 @@ input[type=range] {
     to { transform: rotate(360deg); }
 }
 
-/* Dialog 基础弹窗样式 */
+/* ==========================================
+   Dialog 弹窗基础与统一的右上角 X 按钮样式
+   ========================================== */
 dialog {
     background: #192b34;
     color: var(--text);
@@ -632,27 +630,26 @@ dialog::backdrop {
     backdrop-filter: blur(6px);
 }
 
-/* 🎯 右上角 X 关闭按钮统一约束（去除大边框与多余内边距） */
+/* 🎯 统一精简右上角 X 关闭按钮（无背景框、简洁明了） */
 .dialog-close,
 .editor-close,
-dialog .dialog-close {
+dialog .dialog-close,
+dialog button.dialog-close {
     position: absolute !important;
-    right: 16px !important;
-    top: 16px !important;
+    right: 18px !important;
+    top: 18px !important;
     width: 32px !important;
     height: 32px !important;
     min-width: 32px !important;
     min-height: 32px !important;
-    max-width: 32px !important;
-    max-height: 32px !important;
     padding: 0 !important;
     margin: 0 !important;
     background: transparent !important;
     border: 0 !important;
     border-radius: 6px !important;
-    font-size: 18px !important;
-    line-height: 32px !important;
-    color: #abc1cc !important;
+    font-size: 20px !important;
+    line-height: 1 !important;
+    color: #92acb8 !important;
     cursor: pointer !important;
     display: flex !important;
     align-items: center !important;
@@ -667,165 +664,70 @@ dialog .dialog-close {
     color: #fff !important;
 }
 
-dialog h2 {
-    font-size: 24px;
-    font-weight: 500;
-    margin: 15px 0;
+/* ==========================================
+   MODEL ADD (添加模型) 弹窗专用样式重置
+   ========================================== */
+#add-model-dialog {
+    width: min(620px, calc(100% - 32px));
+    padding: 28px 32px 32px;
 }
 
-#ar-dialog {
-    padding: 34px;
-    width: min(600px, calc(100% - 28px));
-    max-height: 90svh;
-    overflow-y: auto;
+.drop-zone {
+    border: 2px dashed #3a5663;
+    border-radius: 10px;
+    padding: 24px;
+    text-align: center;
+    background: rgba(255, 255, 255, 0.02);
+    margin-bottom: 20px;
+    transition: border-color 0.2s, background 0.2s;
+    cursor: pointer;
 }
 
-#ar-description {
-    font-size: 14px;
-    color: #b4c8d1;
-    line-height: 1.9;
-    margin-bottom: 24px;
+.drop-zone:hover, .drop-zone.dragover {
+    border-color: var(--mint);
+    background: rgba(123, 230, 204, 0.04);
 }
 
-.dialog-footnote {
+.add-form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    margin-bottom: 20px;
+}
+
+.add-form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+}
+
+.add-form-field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.add-form-field label {
     font-size: 12px;
-    color: #86a0af;
-    line-height: 1.6;
-    margin-bottom: 0;
+    color: #8fa7b3;
 }
 
-.dialog-feedback {
-    font-size: 13px;
-    color: var(--mint);
-    line-height: 1.6;
-}
-
-#desktop-help label {
-    font-size: 12px;
-    color: #9cb5c1;
-    display: block;
-    margin-bottom: 8px;
-}
-
-#site-link {
-    width: 100%;
-    border: 1px solid #3d5662;
-    background: #11242e;
-    color: #c9dce6;
-    padding: 12px;
+.add-form-field input, .add-form-field select {
+    background: #112128;
+    border: 1px solid #2e4753;
     border-radius: 6px;
-    font-size: 14px;
-    margin-bottom: 10px;
-}
-
-.secondary-button {
-    width: 100%;
-    background: #2d4753;
-    border: 1px solid #47636f;
-    border-radius: 6px;
-    padding: 12px;
-    font-size: 14px;
+    padding: 10px 12px;
     color: var(--text);
-    transition: background 0.15s;
-}
-
-.secondary-button:hover {
-    background: #385867;
-}
-
-.dialog-progress {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    margin: 18px 0;
     font-size: 13px;
+    outline: none;
 }
 
-.dialog-progress .spinner {
-    width: 19px;
-    height: 19px;
-}
-
-#quicklook-link {
-    display: block;
-    width: 100%;
-}
-
-#quicklook-link img {
-    width: 100%;
-    height: auto;
-    display: block;
-    border-radius: 7px;
-}
-
-.no-script {
-    padding: 20px;
-    position: fixed;
-    bottom: 0;
-    background: #912;
-    z-index: 100;
-}
-
-#xr-overlay {
-    position: fixed;
-    inset: 0;
-    pointer-events: none;
-    color: white;
-    font-size: 14px;
-    z-index: 100;
-    background: transparent;
-}
-
-.xr-top, .xr-bottom {
-    position: absolute;
-    left: 20px;
-    right: 20px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 15px;
-}
-
-.xr-top {
-    top: max(20px, env(safe-area-inset-top));
-    align-items: flex-start;
-}
-
-.xr-top span {
-    background: #10242bc9;
-    border-radius: 7px;
-    padding: 12px;
-    max-width: 65%;
-    line-height: 1.5;
-}
-
-.xr-bottom {
-    bottom: max(25px, env(safe-area-inset-bottom));
-    justify-content: center;
-}
-
-#xr-overlay button {
-    pointer-events: auto;
-    border: 0;
-    border-radius: 8px;
-    padding: 14px 19px;
-    background: var(--mint);
-    color: #12352b;
-    min-height: 48px;
-    font-weight: 600;
-}
-
-#exit-ar {
-    background: #17333ae6 !important;
-    color: white !important;
-}
-
-body.xr-active .header, body.xr-active .workspace {
-    visibility: hidden;
+.add-form-field input:focus, .add-form-field select:focus {
+    border-color: var(--mint);
 }
 
 /* ==========================================
-   模型库弹窗 (#library-dialog) 基础结构
+   MODEL LIBRARY (模型库) 弹窗 - PC 端布局
    ========================================== */
 
 dialog.library-dialog:not([open]) {
@@ -906,11 +808,6 @@ dialog.library-dialog[open] {
     color: var(--text);
     font-size: 13px;
     outline: none;
-    transition: border-color 0.2s;
-}
-
-.search-input-wrapper input[type="search"]:focus {
-    border-color: var(--mint);
 }
 
 .category-select-wrapper {
@@ -922,7 +819,7 @@ dialog.library-dialog[open] {
     white-space: nowrap;
 }
 
-.category-select-wrapper select, .styled-select {
+.category-select-wrapper select {
     background: #162831;
     border: 1px solid #2e4753;
     color: var(--text);
@@ -930,17 +827,12 @@ dialog.library-dialog[open] {
     border-radius: 6px;
     font-size: 13px;
     outline: none;
-    cursor: pointer;
 }
 
-.category-select-wrapper select:focus, .styled-select:focus {
-    border-color: var(--mint);
-}
-
-/* PC 端表头 */
+/* 💻 电脑端 Header 布局：3列 */
 .library-table-header {
-    display: grid;
-    grid-template-columns: 2fr 1fr 140px;
+    display: grid !important;
+    grid-template-columns: 1fr 160px 220px !important;
     gap: 12px;
     align-items: center;
     padding: 10px 28px;
@@ -951,67 +843,47 @@ dialog.library-dialog[open] {
     flex-shrink: 0;
 }
 
-/* 独立纵向滚动区 */
-.library-grid, .library-inventory {
+.library-grid, .library-inventory, #library-list {
     flex: 1 1 auto !important;
     min-height: 0 !important;
     overflow-y: auto !important;
     overflow-x: hidden !important;
-    overscroll-behavior: contain;
     padding: 18px 28px 28px !important;
     display: flex !important;
     flex-direction: column !important;
-    gap: 12px !important;
-    scrollbar-color: #385360 #101c23;
-    scrollbar-width: thin;
+    gap: 10px !important;
 }
 
-/* PC 端默认 Grid 结构 */
+/* 💻 电脑端卡片布局：严格 3 列平行（Name | Category | 操作按钮） */
 .library-entry {
     display: grid !important;
-    grid-template-columns: 2fr 1fr 140px;
-    gap: 12px;
+    grid-template-columns: 1fr 160px 220px !important;
+    gap: 12px !important;
     align-items: center !important;
-    padding: 14px 20px !important;
+    padding: 12px 20px !important;
     background: #0f1c22 !important;
     border: 1px solid #28414c !important;
     border-radius: 10px !important;
-    margin-bottom: 0 !important;
     transition: all 0.2s ease;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
-}
-
-.library-entry:hover {
-    border-color: #3b5f6e !important;
-    background: #14252e !important;
 }
 
 .library-entry.active {
     border-color: var(--mint, #7be6cc) !important;
     background: #122b2f !important;
-    box-shadow: 0 0 12px rgba(123, 230, 204, 0.08) !important;
 }
 
-.library-entry-header, .library-entry-top {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-    min-width: 0;
+.library-entry-top {
+    display: contents !important; /* 电脑端展平，配合 Grid 排版 */
 }
 
 .library-entry h3 {
-    font-size: 15px;
+    font-size: 14px;
     font-weight: 500;
     margin: 0;
     color: var(--text);
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-}
-
-.library-entry.active h3,
-.library-entry h3.active-text {
-    color: var(--mint, #7be6cc) !important;
 }
 
 .category-badge {
@@ -1029,27 +901,19 @@ dialog.library-dialog[open] {
 .library-actions {
     display: flex !important;
     align-items: center !important;
-    justify-content: flex-end;
+    justify-content: flex-end !important;
     gap: 8px !important;
-    margin-top: 0 !important;
-    flex-shrink: 0;
 }
 
 .library-actions button {
     height: 32px;
     padding: 0 12px;
-    font-size: 13px;
+    font-size: 12px;
     border-radius: 6px;
     border: 1px solid #3b5864;
     background: #1a2e38;
     color: #d2e4ea;
-    transition: all 0.15s ease;
     white-space: nowrap;
-}
-
-.library-actions button:hover {
-    background: #254352;
-    border-color: #507787;
 }
 
 .library-actions button.primary,
@@ -1066,130 +930,39 @@ dialog.library-dialog[open] {
     border-color: #5c332f;
 }
 
-.library-actions .danger:hover {
-    background: #3d1b18;
-    border-color: #8c423a;
-}
-
-/* 响应式媒体查询 (PC & Pad) */
-@media (min-width: 1500px) {
-    .workspace { grid-template-columns: minmax(0, 1fr) 390px; }
-    .panel { padding: 36px; }
-    .viewer { min-height: 760px; }
-    .specimen { top: 45px; left: 50px; }
-}
-
-@media (min-width: 621px) {
-    .viewer {
-        position: sticky;
-        top: 0;
-        align-self: start;
-        height: calc(100svh - 76px);
-        min-height: 540px;
-        max-height: none;
-    }
-}
-
-@media (min-width: 621px) and (max-width: 850px) {
-    .viewer { height: calc(100svh - 64px); }
-}
-
-@media (max-width: 850px) {
-    .header { height: 64px; padding: 0 22px; }
-    .workspace { grid-template-columns: minmax(0, 1fr) 310px; min-height: calc(100svh - 64px); }
-    .panel { padding: 25px 20px; }
-    .viewer { min-height: 710px; }
-    .specimen { left: 23px; top: 25px; }
-    .view-tools { top: 120px; left: 23px; right: auto; }
-    .viewer-bottom { left: 22px; right: 20px; flex-wrap: wrap; gap: 5px; }
-    .scale-note { left: 22px; bottom: 84px; }
-    .tech { display: none; }
-}
-
 /* =========================================================
-   📱 手机端专用优化 (Max-Width 620px) — 两行卡片全显示排版
+   📱 手机端专用响应式适配 (Max-Width 620px) — 独享两行布局
    ========================================================= */
 @media (max-width: 620px) {
-    .header {
-        padding: 0 12px;
-        height: auto;
-        min-height: 60px;
-        gap: 8px;
-    }
-    .brand { font-size: 14px; gap: 4px; letter-spacing: 1px; }
-    .brand-mark { height: 24px; width: 24px; font-size: 14px; margin-right: 4px; }
-    .header-right { gap: 6px; }
-    .header-right button, .library-button { height: 30px; font-size: 11px; padding: 0 8px; }
-    .header-right .secondary-button { padding: 0 8px; font-size: 11px; }
-    .poc-tag { font-size: 10px; padding: 3px 6px; }
-
-    .workspace { display: flex; flex-direction: column; }
-    .viewer { height: 55svh; min-height: 380px; max-height: 550px; }
-    .specimen { top: 16px; left: 16px; }
-    h1 { font-size: 20px; }
-    .spec { font-size: 11px; }
-    .eyebrow { font-size: 10px; margin-bottom: 6px; }
-    .view-tools { left: auto; right: 14px; top: 16px; }
-    .view-choice { padding: 5px 8px; font-size: 11px; }
-    .viewer-bottom { bottom: 12px; font-size: 10px; flex-wrap: nowrap; }
-    .scale-note { bottom: 42px; font-size: 10px; }
-    .panel { padding: 20px 16px; border-left: 0; border-top: 1px solid var(--line); }
-
-    .part-list { grid-template-columns: 1fr 1fr; gap: 8px; max-height: 250px; }
-    .part-button { padding: 10px 8px; gap: 6px; font-size: 12px; }
-    .part-type { display: none; }
-    .part-detail { min-height: 70px; }
-    .panel-footer { font-size: 10px; padding-top: 20px; }
-
-    /* 弹窗容器 */
     dialog.library-dialog {
         width: calc(100% - 16px) !important;
         height: calc(100svh - 24px) !important;
         max-height: calc(100svh - 24px) !important;
-        border-radius: 12px !important;
     }
 
     .library-heading { padding: 14px 16px 10px; }
-    .library-heading h2 { font-size: 18px; }
     .library-filter-bar { padding: 10px 16px; flex-direction: column; align-items: stretch; gap: 8px; }
 
-    /* 1. 手机端表头：显示 Name 和 Category，隐藏操作栏标题 */
+    /* 手机端表头 */
     .library-table-header {
         display: flex !important;
         justify-content: space-between !important;
         padding: 8px 16px !important;
-        font-size: 11px !important;
-        color: #6a8491 !important;
     }
-    .library-table-header span:last-child,
     .library-table-header div:last-child {
         display: none !important;
     }
 
-    .library-grid, .library-inventory {
-        padding: 12px 14px 20px !important;
-    }
-
-    /* 2. 核心：重构卡片为纵向 Flex 容器 */
+    /* 📱 手机端：卡片变为 Flex 纵向两行布局 */
     .library-entry {
         display: flex !important;
         flex-direction: column !important;
         align-items: stretch !important;
         gap: 10px !important;
         padding: 12px 14px !important;
-        background: #0f1c22 !important;
-        border: 1px solid #28414c !important;
-        border-radius: 10px !important;
-        box-sizing: border-box !important;
     }
 
-    .library-entry.active {
-        border-color: var(--mint, #7be6cc) !important;
-        background: #122b2f !important;
-    }
-
-    /* 3. 第一行：左侧 Name，右侧 Category */
-    .library-entry-header,
+    /* 📱 第一行：左侧 Name，右侧 Category Badge */
     .library-entry-top {
         display: flex !important;
         flex-direction: row !important;
@@ -1198,83 +971,16 @@ dialog.library-dialog[open] {
         width: 100% !important;
     }
 
-    /* 保证名字一定能显示出来，且自动截断过长的文本 */
     .library-entry h3 {
-        display: block !important;
-        visibility: visible !important;
+        max-width: 68% !important;
         font-size: 14px !important;
-        font-weight: 500 !important;
-        color: var(--text, #eff7f7) !important;
-        margin: 0 !important;
-        max-width: 70% !important;
-        overflow: hidden !important;
-        text-overflow: ellipsis !important;
-        white-space: nowrap !important;
     }
 
-    .library-entry.active h3 {
-        color: var(--mint, #7be6cc) !important;
-    }
-
-    /* Category Badge 标签 */
-    .category-badge {
-        display: inline-block !important;
-        font-size: 11px !important;
-        padding: 2px 8px !important;
-        border-radius: 4px !important;
-        background: #1a2f38 !important;
-        color: #8eb1be !important;
-        border: 1px solid #2d4b57 !important;
-        white-space: nowrap !important;
-    }
-
-    /* 4. 第二行：操作按钮靠右对齐 */
+    /* 📱 第二行：底端按钮组 */
     .library-actions {
-        display: flex !important;
-        justify-content: flex-end !important;
-        align-items: center !important;
-        gap: 8px !important;
         width: 100% !important;
         border-top: 1px solid rgba(255, 255, 255, 0.06) !important;
         padding-top: 8px !important;
         margin-top: 2px !important;
-    }
-
-    /* 包含当前使用/使用、编辑、删除三个按钮的完整支持 */
-    .library-actions button {
-        display: inline-flex !important;
-        align-items: center !important;
-        justify-content: center !important;
-        height: 30px !important;
-        padding: 0 10px !important;
-        font-size: 12px !important;
-        border-radius: 6px !important;
-        border: 1px solid #3b5864 !important;
-        background: #1a2e38 !important;
-        color: #d2e4ea !important;
-        white-space: nowrap !important;
-        flex: initial !important;
-    }
-
-    .library-actions button.primary,
-    .library-actions button[disabled] {
-        background: #17483f !important;
-        border-color: var(--mint, #7be6cc) !important;
-        color: var(--mint, #7be6cc) !important;
-        font-weight: 600 !important;
-        opacity: 1 !important;
-    }
-
-    .library-actions button.danger {
-        color: #ffa192 !important;
-        border-color: #5c332f !important;
-        background: transparent !important;
-    }
-}
-
-@media (prefers-reduced-motion: reduce) {
-    * {
-        animation-duration: .001ms !important;
-        transition: none !important;
     }
 }
