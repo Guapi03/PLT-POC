@@ -90,7 +90,7 @@
 
             <div class="editor-field">
               <label class="editor-field-title">分类筛选</label>
-              <select class="styled-select">
+              <select class="editor-field-title">
                 <option value="all">全部分类</option>
               </select>
             </div>
@@ -148,9 +148,11 @@
 
             <label class="editor-field">
               <span class="editor-field-title">模型类型 / 分类</span>
-              <select id="import-category" class="styled-select">
-                <!-- 由 JS 动态填充 -->
-              </select>
+              <div class="search-input-wrapper">
+                <select id="import-category" class="styled-select">
+                  <!-- 由 JS 动态填充 -->
+                </select>
+              </div>
             </label>
           </div>
           <p class="editor-help" style="margin-top: 14px;">以 Blender 中导出的米制尺寸展示。当前版本支持静态、未压缩的 GLB 模型。</p>

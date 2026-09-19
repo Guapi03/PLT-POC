@@ -797,7 +797,19 @@ dialog.model-editor-style::backdrop {
 }
 
 .model-editor-style input[type=text],
-.model-editor-style input[type=search],
+.model-editor-style input[type=search]{
+    width: 100%;
+    min-height: 42px;
+    border: 1px solid #3f5b67;
+    border-radius: 6px;
+    background: #0e1c23;
+    color: #f1f8f8;
+    font: inherit;
+    font-size: 14px;
+    padding: 10px 11px;
+    box-sizing: border-box;
+}
+
 .model-editor-style select,
 .styled-select {
     width: 100%;
@@ -808,7 +820,7 @@ dialog.model-editor-style::backdrop {
     color: #f1f8f8;
     font: inherit;
     font-size: 14px;
-    padding: 10px 11px;
+    padding: 8px 11px;
     box-sizing: border-box;
 }
 
