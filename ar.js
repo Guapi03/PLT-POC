@@ -17,7 +17,7 @@ export async function exportARModel(product,originals,{profile='bottle',settings
     });obj.material=cloned.length===1?cloned[0]:cloned;
   });
   clone.updateMatrixWorld(true);
-  try{return await new USDZExporter().parseAsync(clone,{quickLookCompatible:true,onlyVisible:true,maxTextureSize:1024,includeAnchoringProperties:true,ar:{anchoring:{type:'plane'},planeAnchoring:{alignment:'horizontal'}}});}
+  try{return await new USDZExporter().parse(clone,{quickLookCompatible:true,onlyVisible:true,maxTextureSize:1024,includeAnchoringProperties:true,ar:{anchoring:{type:'plane'},planeAnchoring:{alignment:'horizontal'}}});}
   finally{materials.forEach(m=>m.dispose());}
 }
 
