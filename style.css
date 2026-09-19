@@ -1,3 +1,6 @@
+/* ==========================================================================
+   1. 全局变量与基础重置 (Variables & Base Reset)
+   ========================================================================== */
 :root {
     color-scheme: dark;
     --bg: #10191e;
@@ -24,19 +27,13 @@ body {
 
 button, input, select, a {
     -webkit-tap-highlight-color: transparent;
-}
-
-button, input, select {
     font: inherit;
+    color: inherit;
 }
 
 button, a {
     touch-action: manipulation;
-}
-
-button {
     cursor: pointer;
-    color: inherit;
 }
 
 button:disabled {
@@ -44,20 +41,39 @@ button:disabled {
     opacity: .48;
 }
 
-button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible, #canvas-host:focus-visible {
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible,
+#canvas-host:focus-visible {
     outline: 2px solid var(--mint);
     outline-offset: 4px;
-}
-
-a {
-    color: inherit;
 }
 
 button[hidden], [hidden] {
     display: none !important;
 }
 
-/* Header 顶部导航栏 */
+.tech, .eyebrow, .section-index, .part-number, .range-marks, .scale-note {
+    font-family: 'IBM Plex Mono', monospace;
+}
+
+.tech {
+    font-size: 12px;
+    color: var(--muted);
+}
+
+.poc-tag {
+    font-size: 12px;
+    border: 1px solid var(--line);
+    padding: 5px 9px;
+    border-radius: 4px;
+    color: #c2d0d6;
+}
+
+/* ==========================================================================
+   2. 头部导航栏 (Header)
+   ========================================================================== */
 .header {
     height: 76px;
     display: flex;
@@ -129,7 +145,6 @@ button[hidden], [hidden] {
     background: #385867;
 }
 
-/* 模型库按钮 */
 .library-button {
     background: #243c43;
     border: 1px solid #49635b;
@@ -138,11 +153,9 @@ button[hidden], [hidden] {
     font-size: 14px;
     color: #eff7f7;
     min-width: max-content;
-
     pointer-events: auto;
     cursor: pointer;
     user-select: none;
-
     display: inline-flex;
     align-items: center;
     gap: 8px;
@@ -151,7 +164,7 @@ button[hidden], [hidden] {
 
 .library-button:hover {
     background: #2d4c55;
-    border-color: var(--mint, #7be6cc);
+    border-color: var(--mint);
 }
 
 .library-button:active {
@@ -159,7 +172,7 @@ button[hidden], [hidden] {
 }
 
 .library-button .search-icon {
-    color: var(--mint, #7be6cc);
+    color: var(--mint);
     flex-shrink: 0;
     transition: transform 0.2s;
 }
@@ -168,24 +181,9 @@ button[hidden], [hidden] {
     transform: scale(1.15);
 }
 
-.tech, .eyebrow, .section-index, .part-number, .range-marks, .scale-note {
-    font-family: 'IBM Plex Mono', monospace;
-}
-
-.tech {
-    font-size: 12px;
-    color: var(--muted);
-}
-
-.poc-tag {
-    font-size: 12px;
-    border: 1px solid var(--line);
-    padding: 5px 9px;
-    border-radius: 4px;
-    color: #c2d0d6;
-}
-
-/* 主工作区布局 */
+/* ==========================================================================
+   3. 主工作区与 3D 视图 (Workspace & Viewer)
+   ========================================================================== */
 .workspace {
     display: grid;
     grid-template-columns: minmax(0, 1fr) 350px;
@@ -313,7 +311,36 @@ h1 {
     color: #7793a2;
 }
 
-/* 控制面板 */
+.loading {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 18px;
+    background: #152731;
+    z-index: 3;
+    color: #c0d1d9;
+    font-size: 14px;
+}
+
+.spinner {
+    width: 24px;
+    height: 24px;
+    border: 2px solid #395967;
+    border-top-color: var(--mint);
+    border-radius: 100%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* ==========================================================================
+   4. 右侧控制面板 (Panel Controls)
+   ========================================================================== */
 .panel {
     padding: 32px 26px 22px;
     background: var(--panel);
@@ -566,6 +593,21 @@ input[type=range] {
     line-height: 1;
 }
 
+.secondary-button {
+    width: 100%;
+    background: #2d4753;
+    border: 1px solid #47636f;
+    border-radius: 6px;
+    padding: 12px;
+    font-size: 14px;
+    color: var(--text);
+    transition: background 0.15s;
+}
+
+.secondary-button:hover {
+    background: #385867;
+}
+
 .ar-section .ar-note {
     margin: 9px 0 0 !important;
     font-size: 11px !important;
@@ -592,34 +634,9 @@ input[type=range] {
     color: #adbec7;
 }
 
-.loading {
-    position: absolute;
-    inset: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-direction: column;
-    gap: 18px;
-    background: #152731;
-    z-index: 3;
-    color: #c0d1d9;
-    font-size: 14px;
-}
-
-.spinner {
-    width: 24px;
-    height: 24px;
-    border: 2px solid #395967;
-    border-top-color: var(--mint);
-    border-radius: 100%;
-    animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-    to { transform: rotate(360deg); }
-}
-
-/* Dialog 基础样式 */
+/* ==========================================================================
+   5. 弹窗基础与统一管理规范 (Dialog Base & Common Modals)
+   ========================================================================== */
 dialog {
     background: #192b34;
     color: var(--text);
@@ -634,7 +651,7 @@ dialog::backdrop {
     backdrop-filter: blur(6px);
 }
 
-/* 🎯 统一右上角 X 关闭按钮 */
+/* 统一右上角关闭按钮 */
 .dialog-close,
 .editor-close,
 dialog .dialog-close {
@@ -673,6 +690,383 @@ dialog h2 {
     margin: 15px 0;
 }
 
+/* ==========================================================================
+   6. 编辑器与数据交互统一设计系统 (Model Editor Style Architecture)
+   ========================================================================== */
+dialog.model-editor-style {
+    width: min(860px, calc(100% - 32px));
+    height: min(92svh, 1020px);
+    max-height: min(92svh, 1020px);
+    padding: 0;
+    background: #14242c;
+    border: 1px solid #425c65;
+    border-radius: 16px;
+    overflow: hidden;
+    color: var(--text, #eff7f7);
+    box-sizing: border-box;
+}
+
+dialog.model-editor-style::backdrop {
+    background: #071015a8;
+    backdrop-filter: blur(3px);
+}
+
+.model-editor-style .model-editor-form {
+    display: flex !important;
+    flex-direction: column !important;
+    height: 100% !important;
+    max-height: 100% !important;
+    min-height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: hidden !important;
+}
+
+/* 统一 Header */
+.model-editor-style .editor-header {
+    position: relative;
+    padding: 26px 32px 21px;
+    border-bottom: 1px solid #304850;
+    flex-shrink: 0;
+}
+
+.model-editor-style .editor-header .eyebrow {
+    font-size: 10px;
+    margin: 0 0 6px;
+    letter-spacing: 2px;
+    color: var(--mint);
+}
+
+.model-editor-style .editor-header h2 {
+    font-size: 25px;
+    margin: 0 42px 8px 0;
+    font-weight: 500;
+}
+
+.model-editor-style .editor-intro,
+.model-editor-style .editor-help {
+    color: #9fb7c1;
+    font-size: 13px;
+    line-height: 1.75;
+    margin: 0;
+}
+
+/* 统一 Body & 滚动视图 */
+.model-editor-style .editor-fields {
+    border: 0 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    min-width: 0 !important;
+    min-height: 0 !important;
+    flex: 1 1 auto !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    overscroll-behavior: contain;
+    scrollbar-color: #506975 #172932;
+    scrollbar-width: thin;
+}
+
+.model-editor-style .editor-body {
+    padding: 0 32px 28px;
+}
+
+.model-editor-style .editor-section {
+    padding-top: 25px;
+    margin-top: 25px;
+    border-top: 1px solid #304850;
+}
+
+/* 统一表单元素与控件（新增相邻表单间距：解决“模型类型”紧贴“模型名称”的问题） */
+.model-editor-style .editor-field {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+    min-width: 0;
+    margin: 0;
+}
+
+/* 表单字段间距空行优化 */
+.model-editor-style .editor-field + .editor-field {
+    margin-top: 20px;
+}
+
+.model-editor-style .editor-field-title {
+    font-size: 12px;
+    color: #a9c1ca;
+    line-height: 1.5;
+}
+
+.model-editor-style input[type=text],
+.model-editor-style input[type=search],
+.model-editor-style select,
+.styled-select {
+    width: 100%;
+    min-height: 42px;
+    border: 1px solid #3f5b67;
+    border-radius: 6px;
+    background: #0e1c23;
+    color: #f1f8f8;
+    font: inherit;
+    font-size: 14px;
+    padding: 10px 11px;
+    box-sizing: border-box;
+}
+
+.model-editor-style input:focus,
+.model-editor-style select:focus,
+.styled-select:focus {
+    outline: 2px solid var(--mint);
+    outline-offset: 1px;
+}
+
+.search-input-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+    width: 100%;
+}
+
+.search-input-wrapper .search-icon {
+    position: absolute;
+    left: 12px;
+    color: #6c8793;
+    pointer-events: none;
+}
+
+.search-input-wrapper input {
+    padding-left: 36px !important;
+}
+
+/* 拖拽上传卡片 */
+.drop-zone-card, .drop-zone {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 32px 20px;
+    background: #0e1c23;
+    border: 2px dashed #3f5b67;
+    border-radius: 10px;
+    cursor: pointer;
+    text-align: center;
+    transition: all 0.2s ease;
+}
+
+.drop-zone-card:hover, .drop-zone-card.dragover,
+.drop-zone:hover, .drop-zone.dragover, .drop-zone.dragging {
+    border-color: var(--mint);
+    background: #152932;
+}
+
+.drop-zone-card .upload-icon {
+    font-size: 28px;
+    color: var(--mint);
+    margin-bottom: 6px;
+    line-height: 1;
+}
+
+.drop-zone-card strong {
+    font-size: 15px;
+    color: #f1f8f8;
+    font-weight: 500;
+}
+
+.drop-zone-card .drop-hint {
+    font-size: 12px;
+    color: #8ba8b5;
+    margin-top: 4px;
+}
+
+/* 统一 Footer 操作栏 */
+.model-editor-style .editor-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    flex-shrink: 0;
+    padding: 18px 32px;
+    border-top: 1px solid #304850;
+    background: #14242c;
+}
+
+.model-editor-style .editor-feedback {
+    font-size: 12px;
+    color: #a8c4ce;
+    line-height: 1.65;
+    margin: 0;
+    max-width: 360px;
+}
+
+.model-editor-style .editor-feedback.error {
+    color: #ffc1ad;
+}
+
+.model-editor-style .editor-actions {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    flex-shrink: 0;
+}
+
+.model-editor-style .editor-button {
+    padding: 10px 18px;
+    min-height: 40px;
+    border: 1px solid #42606b;
+    background: #233d47;
+    color: #dff1f5;
+    border-radius: 6px;
+    font-size: 13px;
+    cursor: pointer;
+}
+
+.model-editor-style .editor-button:hover {
+    background: #304f59;
+}
+
+.model-editor-style .editor-primary {
+    border-color: transparent;
+    background: var(--mint);
+    color: #092a25;
+    font-weight: 600;
+}
+
+.model-editor-style .editor-primary:hover {
+    background: #a6f3df;
+}
+
+/* ==========================================================================
+   7. 模型库专用展示规范 (#library-dialog / .library-grid)
+   ========================================================================== */
+
+/* 模型库：搜索框与分类筛选平行排列容器 */
+.library-filter-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 220px;
+    gap: 16px;
+    align-items: flex-start;
+    margin-bottom: 20px;
+}
+
+.library-filter-row .editor-field + .editor-field {
+    margin-top: 0; /* 平行时取消邻接上边距 */
+}
+
+.library-table-header {
+    display: grid;
+    grid-template-columns: minmax(0, 1.4fr) minmax(160px, 1fr) 100px;
+    gap: 16px;
+    padding: 0 12px 10px;
+    font-size: 12px;
+    color: #8ba8b5;
+    border-bottom: 1px solid #283e47;
+    margin-bottom: 12px;
+}
+
+.library-grid, .library-inventory, #library-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.library-entry {
+    display: grid;
+    grid-template-columns: minmax(0, 1.4fr) minmax(160px, 1fr) 100px;
+    gap: 16px;
+    align-items: center;
+    padding: 12px 16px;
+    background: #0f1c22;
+    border: 1px solid #28414c;
+    border-radius: 10px;
+    transition: all 0.2s ease;
+}
+
+.library-entry-top {
+    display: contents;
+}
+
+.library-entry:hover {
+    border-color: #3b5f6e;
+    background: #14252e;
+}
+
+.library-entry.active {
+    border-color: var(--mint);
+    background: #122b2f;
+    box-shadow: 0 0 12px rgba(123, 230, 204, 0.08);
+}
+
+.library-entry h3 {
+    font-size: 14px;
+    font-weight: 500;
+    margin: 0;
+    color: var(--text);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.library-entry.active h3 {
+    color: var(--mint);
+}
+
+.category-badge {
+    display: inline-block;
+    padding: 3px 10px;
+    font-size: 12px;
+    border-radius: 5px;
+    background: #1a2f38;
+    color: #8eb1be;
+    border: 1px solid #2d4b57;
+    white-space: nowrap;
+    width: max-content;
+}
+
+.library-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 8px;
+}
+
+.library-actions button {
+    height: 32px;
+    padding: 0 12px;
+    font-size: 12px;
+    border-radius: 6px;
+    border: 1px solid #3b5864;
+    background: #1a2e38;
+    color: #d2e4ea;
+    transition: all 0.15s ease;
+    white-space: nowrap;
+}
+
+.library-actions button:hover {
+    background: #254352;
+    border-color: #507787;
+}
+
+.library-actions button.primary,
+.library-actions button[disabled] {
+    background: #17483f;
+    border-color: var(--mint);
+    color: var(--mint);
+    font-weight: 600;
+}
+
+.library-actions .danger {
+    color: #ffa192;
+    background: transparent;
+    border-color: #5c332f;
+}
+
+.library-actions .danger:hover {
+    background: #3d1b18;
+    border-color: #8c423a;
+}
+
+/* ==========================================================================
+   8. AR / WebXR 交互样式
+   ========================================================================== */
 #ar-dialog {
     padding: 34px;
     width: min(600px, calc(100% - 28px));
@@ -718,21 +1112,6 @@ dialog h2 {
     margin-bottom: 10px;
 }
 
-.secondary-button {
-    width: 100%;
-    background: #2d4753;
-    border: 1px solid #47636f;
-    border-radius: 6px;
-    padding: 12px;
-    font-size: 14px;
-    color: var(--text);
-    transition: background 0.15s;
-}
-
-.secondary-button:hover {
-    background: #385867;
-}
-
 .dialog-progress {
     display: flex;
     align-items: center;
@@ -756,14 +1135,6 @@ dialog h2 {
     height: auto;
     display: block;
     border-radius: 7px;
-}
-
-.no-script {
-    padding: 20px;
-    position: fixed;
-    bottom: 0;
-    background: #912;
-    z-index: 100;
 }
 
 #xr-overlay {
@@ -820,364 +1191,24 @@ dialog h2 {
     color: white !important;
 }
 
-body.xr-active .header, body.xr-active .workspace {
+body.xr-active .header,
+body.xr-active .workspace {
     visibility: hidden;
 }
 
-/* ==========================================
-   模型库弹窗 (#library-dialog) PC 端默认 3 列排版
-   ========================================== */
-
-dialog.library-dialog:not([open]) {
-    display: none !important;
-}
-
-dialog.library-dialog[open] {
+.no-script {
+    padding: 20px;
     position: fixed;
-    inset: 0;
-    margin: auto;
-    z-index: 1000;
-
-    width: min(920px, calc(100% - 32px));
-    height: min(90svh, 820px);
-    max-height: min(90svh, 820px);
-    padding: 0;
-    background: #122128;
-    border: 1px solid #3e5a66;
-    border-radius: 16px;
-    overflow: hidden;
-    color: var(--text, #eff7f7);
-    box-sizing: border-box;
-
-    display: flex;
-    flex-direction: column;
+    bottom: 0;
+    background: #912;
+    z-index: 100;
 }
 
-.library-heading {
-    display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-    padding: 22px 28px 16px;
-    border-bottom: 1px solid #283e47;
-    flex-shrink: 0;
-}
+/* ==========================================================================
+   9. 响应式与媒体查询 (Responsive Media Queries)
+   ========================================================================== */
 
-.library-heading .eyebrow {
-    font-size: 10px;
-    margin: 0 0 4px;
-    letter-spacing: 2px;
-    color: var(--mint, #7be6cc);
-}
-
-.library-heading h2 {
-    font-size: 22px;
-    margin: 2px 0 0;
-    font-weight: 500;
-}
-
-/* 顶部搜索与筛选工具栏 */
-.library-filter-bar {
-    display: flex;
-    gap: 16px;
-    align-items: center;
-    padding: 14px 28px;
-    background: #0d181e;
-    border-bottom: 1px solid #223741;
-    flex-shrink: 0;
-}
-
-.search-input-wrapper {
-    position: relative;
-    flex: 1;
-    display: flex;
-    align-items: center;
-}
-
-.search-input-wrapper .search-icon {
-    position: absolute;
-    left: 12px;
-    color: var(--muted);
-    pointer-events: none;
-}
-
-.search-input-wrapper input[type="search"] {
-    width: 100%;
-    padding: 8px 12px 8px 36px;
-    background: #162831;
-    border: 1px solid #2e4753;
-    border-radius: 6px;
-    color: var(--text);
-    font-size: 13px;
-    outline: none;
-    transition: border-color 0.2s;
-}
-
-.search-input-wrapper input[type="search"]:focus {
-    border-color: var(--mint);
-}
-
-.category-select-wrapper {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-size: 13px;
-    color: var(--muted);
-    white-space: nowrap;
-}
-
-.category-select-wrapper select, .styled-select {
-    background: #162831;
-    border: 1px solid #2e4753;
-    color: var(--text);
-    padding: 8px 12px;
-    border-radius: 6px;
-    font-size: 13px;
-    outline: none;
-    cursor: pointer;
-}
-
-.category-select-wrapper select:focus, .styled-select:focus {
-    border-color: var(--mint);
-}
-
-/* 💻 电脑端表头: 强行固定 3 列 (Name | Category | 操作) */
-.library-table-header {
-    display: grid !important;
-    grid-template-columns: minmax(0, 1fr) 160px 220px !important;
-    gap: 12px;
-    align-items: center;
-    padding: 10px 28px;
-    background: #0a1318;
-    border-bottom: 1px solid #1c2e36;
-    font-size: 12px;
-    color: #6a8491;
-    flex-shrink: 0;
-}
-
-/* 核心滚动视口 */
-.library-grid, .library-inventory, #library-list {
-    flex: 1 1 auto !important;
-    min-height: 0 !important;
-    overflow-y: auto !important;
-    overflow-x: hidden !important;
-    overscroll-behavior: contain;
-
-    padding: 18px 28px 28px !important;
-    display: flex !important;
-    flex-direction: column !important;
-    gap: 10px !important;
-
-    scrollbar-color: #385360 #101c23;
-    scrollbar-width: thin;
-}
-
-/* 💻 电脑端卡片: 3 列平行对其结构 */
-.library-entry {
-    display: grid !important;
-    grid-template-columns: minmax(0, 1fr) 160px 220px !important;
-    gap: 12px !important;
-    align-items: center !important;
-    padding: 12px 20px !important;
-    background: #0f1c22 !important;
-    border: 1px solid #28414c !important;
-    border-radius: 10px !important;
-    margin-bottom: 0 !important;
-    transition: all 0.2s ease;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
-}
-
-.library-entry-top {
-    display: contents !important; /* 电脑端展开参与 Grid 排版 */
-}
-
-.library-entry:hover {
-    border-color: #3b5f6e !important;
-    background: #14252e !important;
-}
-
-.library-entry.active {
-    border-color: var(--mint, #7be6cc) !important;
-    background: #122b2f !important;
-    box-shadow: 0 0 12px rgba(123, 230, 204, 0.08) !important;
-}
-
-.library-entry h3 {
-    font-size: 14px;
-    font-weight: 500;
-    margin: 0;
-    color: var(--text);
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
-
-.library-entry.active h3 {
-    color: var(--mint, #7be6cc) !important;
-}
-
-/* 分类 Badge 标签 */
-.category-badge {
-    display: inline-block;
-    padding: 3px 10px;
-    font-size: 12px;
-    border-radius: 5px;
-    background: #1a2f38;
-    color: #8eb1be;
-    border: 1px solid #2d4b57;
-    white-space: nowrap;
-    width: max-content;
-}
-
-/* 右侧操作按钮组 */
-.library-actions {
-    display: flex !important;
-    align-items: center !important;
-    justify-content: flex-end !important;
-    gap: 8px !important;
-    margin-top: 0 !important;
-    flex-shrink: 0;
-}
-
-.library-actions button {
-    height: 32px;
-    padding: 0 12px;
-    font-size: 12px;
-    border-radius: 6px;
-    border: 1px solid #3b5864;
-    background: #1a2e38;
-    color: #d2e4ea;
-    transition: all 0.15s ease;
-    white-space: nowrap;
-}
-
-.library-actions button:hover {
-    background: #254352;
-    border-color: #507787;
-}
-
-.library-actions button.primary,
-.library-actions button[disabled] {
-    background: #17483f !important;
-    border-color: var(--mint, #7be6cc) !important;
-    color: var(--mint, #7be6cc) !important;
-    font-weight: 600;
-}
-
-.library-actions .danger {
-    color: #ffa192;
-    background: transparent;
-    border-color: #5c332f;
-}
-
-.library-actions .danger:hover {
-    background: #3d1b18;
-    border-color: #8c423a;
-}
-
-/* ==========================================
-   MODEL ADD (添加模型) 弹窗 (#add-model-dialog / #upload-dialog)
-   ========================================== */
-#add-model-dialog,
-#upload-dialog {
-    width: min(580px, calc(100% - 32px));
-    padding: 32px;
-    box-sizing: border-box;
-}
-
-.drop-zone {
-    min-height: 140px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    text-align: center;
-    gap: 10px;
-    border: 2px dashed rgba(123, 230, 204, 0.35);
-    background: rgba(123, 230, 204, 0.03);
-    border-radius: 12px;
-    padding: 24px;
-    cursor: pointer;
-    position: relative;
-    margin-bottom: 24px;
-    transition: all 0.25s ease;
-}
-
-.drop-zone:hover, .drop-zone.dragover, .drop-zone.dragging {
-    border-color: var(--mint, #7be6cc);
-    background: rgba(123, 230, 204, 0.08);
-}
-
-.drop-zone input[type=file] {
-    position: absolute;
-    inset: 0;
-    width: 100%;
-    height: 100%;
-    opacity: 0;
-    cursor: pointer;
-}
-
-.add-form-group {
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
-    margin-bottom: 24px;
-    width: 100%;
-}
-
-.add-form-row {
-    display: grid !important;
-    grid-template-columns: 1fr 1fr !important;
-    gap: 16px !important;
-    width: 100% !important;
-}
-
-.add-form-field {
-    display: flex !important;
-    flex-direction: column !important;
-    align-items: flex-start !important;
-    gap: 8px !important;
-    width: 100% !important;
-}
-
-.add-form-field label {
-    font-size: 13px !important;
-    color: #a3b8c2 !important;
-    font-weight: 500 !important;
-    white-space: nowrap !important;
-    display: block !important;
-}
-
-.add-form-field input[type="text"],
-.add-form-field select {
-    width: 100% !important;
-    height: 42px !important;
-    box-sizing: border-box !important;
-    background: #112128 !important;
-    border: 1px solid #2e4753 !important;
-    border-radius: 8px !important;
-    padding: 0 14px !important;
-    color: var(--text, #eff7f7) !important;
-    font-size: 14px !important;
-    outline: none !important;
-    transition: border-color 0.2s, box-shadow 0.2s !important;
-}
-
-.add-form-field input[type="text"]::placeholder {
-    color: #58707d;
-}
-
-.add-form-field input[type="text"]:focus,
-.add-form-field select:focus {
-    border-color: var(--mint, #7be6cc) !important;
-    box-shadow: 0 0 0 3px rgba(123, 230, 204, 0.15) !important;
-}
-@media (max-width: 520px) {
-    .add-form-row {
-        grid-template-columns: 1fr !important;
-        gap: 16px !important;
-    }
-}
-/* 响应式断点 (Responsive Media Queries) */
+/* 🖥 宽屏优化 (Min-width: 1500px) */
 @media (min-width: 1500px) {
     .workspace {
         grid-template-columns: minmax(0, 1fr) 390px;
@@ -1194,6 +1225,7 @@ dialog.library-dialog[open] {
     }
 }
 
+/* 💻 桌面端视图固定 (Min-width: 621px) */
 @media (min-width: 621px) {
     .viewer {
         position: sticky;
@@ -1211,6 +1243,7 @@ dialog.library-dialog[open] {
     }
 }
 
+/* 📱 中等屏幕/平板 (Max-width: 850px) */
 @media (max-width: 850px) {
     .header {
         height: 64px;
@@ -1250,7 +1283,7 @@ dialog.library-dialog[open] {
     }
 }
 
-/* 📱 手机端专用优化 (Max-Width 620px) — 独享两行卡片布局 */
+/* 📱 手机端专用自适应 (Max-width: 620px) */
 @media (max-width: 620px) {
     .header {
         padding: 0 12px;
@@ -1384,42 +1417,44 @@ dialog.library-dialog[open] {
         overflow-wrap: anywhere;
     }
 
-    /* 📱 手机端模型库：简化表头 & 切换为两行布局 */
-    dialog.library-dialog {
-        width: calc(100% - 16px) !important;
-        height: calc(100svh - 24px) !important;
-        max-height: calc(100svh - 24px) !important;
+    /* 📱 手机端弹窗与模型库自适应：两行结构化卡片与搜索框回归单列垂直 */
+    dialog.model-editor-style {
+        width: calc(100% - 16px);
+        height: calc(100svh - 24px);
+        max-height: calc(100svh - 24px);
         border-radius: 12px;
     }
-    .library-heading {
-        padding: 14px 16px 10px;
-    }
-    .library-heading h2 {
-        font-size: 18px;
-    }
-    .library-filter-bar {
-        padding: 10px 16px;
-        flex-direction: column;
-        align-items: stretch;
-        gap: 8px;
+
+    .library-filter-row {
+        grid-template-columns: 1fr;
+        gap: 12px;
     }
 
-    /* 手机端表头 */
-    .library-table-header {
-        display: flex !important;
-        justify-content: space-between !important;
-        padding: 8px 16px !important;
-        font-size: 11px;
+    .model-editor-style .editor-header {
+        padding: 21px 20px 17px;
     }
-    .library-table-header div:last-child {
+
+    .model-editor-style .editor-body {
+        padding: 0 18px 23px;
+    }
+
+    .model-editor-style .editor-footer {
+        padding: 15px 18px;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 12px;
+    }
+
+    .model-editor-style .editor-actions {
+        justify-content: flex-end;
+    }
+
+    /* 隐藏电脑端表头 */
+    .library-table-header {
         display: none !important;
     }
 
-    .library-grid, .library-inventory, #library-list {
-        padding: 12px 14px 20px !important;
-    }
-
-    /* 📱 手机端卡片结构：改为 Flex 纵向两行布局 */
+    /* 卡片转 Flex 纵向双行布局 */
     .library-entry {
         display: flex !important;
         flex-direction: column !important;
@@ -1428,7 +1463,7 @@ dialog.library-dialog[open] {
         padding: 12px 14px !important;
     }
 
-    /* 第一行：左边名称，右边分类标签 */
+    /* 行 1：名称与分类 */
     .library-entry-top {
         display: flex !important;
         flex-direction: row !important;
@@ -1447,7 +1482,7 @@ dialog.library-dialog[open] {
         padding: 2px 8px;
     }
 
-    /* 第二行：操作按钮排列 */
+    /* 行 2：操作按钮 */
     .library-actions {
         width: 100% !important;
         display: flex !important;
@@ -1468,6 +1503,7 @@ dialog.library-dialog[open] {
     }
 }
 
+/* 减弱动画辅助模式 */
 @media (prefers-reduced-motion: reduce) {
     * {
         animation-duration: .001ms !important;

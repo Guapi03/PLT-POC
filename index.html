@@ -8,7 +8,7 @@
   <title>Glass Lab — 玻璃仪器 3D / AR</title>
   <meta name="description" content="探索玻璃洗涤瓶的结构，抬起上盖查看内部，并在支持的手机上以 AR 放到桌面。">
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%2310191e'/%3E%3Cpath d='M12 6h8m-6 0v9L7 25h18l-7-10V6' fill='none' stroke='%237be6cc' stroke-width='2' stroke-linejoin='round'/%3E%3C/svg%3E">
-  <link rel="stylesheet" href="./style.css?v=editor-2">
+  <link rel="stylesheet" href="./style.css?v=editor-3">
   <script type="importmap">{"imports":{"three":"./vendor/three/build/three.module.js","three/addons/":"./vendor/three/examples/jsm/"}}</script>
 </head>
 <body>
@@ -64,94 +64,108 @@
   </aside>
 </main>
 
-<!-- 1. MODEL LIBRARY 模型库弹窗 -->
-<dialog id="library-dialog" class="library-dialog" aria-labelledby="library-title">
-  <div class="library-heading">
-    <div>
-      <p class="eyebrow">MODEL LIBRARY</p>
-      <h2 id="library-title">模型库</h2>
-    </div>
-    <button id="close-library" class="dialog-close" aria-label="关闭模型库">×</button>
-  </div>
+<!-- 1. MODEL LIBRARY 模型库弹窗 (对齐 Model Editor 规范) -->
+<dialog id="library-dialog" class="model-editor-style" aria-labelledby="library-title">
+  <div class="model-editor-form">
+    <header class="editor-header">
+      <div>
+        <p class="eyebrow">MODEL LIBRARY</p>
+        <h2 id="library-title">模型库</h2>
+        <p class="editor-intro">检索并挑选数据库中的 3D 模型项目，快速进行切换或预览。</p>
+      </div>
+      <button id="close-library" class="editor-close" aria-label="关闭模型库">×</button>
+    </header>
 
-  <!-- 搜索与筛选控制栏 -->
-  <div class="library-filter-bar">
-    <div class="search-input-wrapper">
-      <svg class="search-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-        <circle cx="11" cy="11" r="8"></circle>
-        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-      </svg>
-      <input type="search" id="library-search-input" placeholder="搜索模型名称或分类..." />
-    </div>
+    <fieldset class="editor-fields">
+      <div class="editor-body">
+        <section class="editor-section" style="border-top: 0; margin-top: 0; padding-top: 20px;">
+          <div class="library-filter-row">
+            <div class="editor-field">
+              <label class="editor-field-title">搜索</label>
+              <div class="search-input-wrapper">
+                <span class="search-icon">🔍</span>
+                <input type="search" placeholder="搜索模型名称..." />
+              </div>
+            </div>
 
-    <div class="category-select-wrapper">
-      <label for="library-category-select">类型：</label>
-      <select id="library-category-select">
-        <option value="ALL">全部分类</option>
-      </select>
-    </div>
-  </div>
+            <div class="editor-field">
+              <label class="editor-field-title">分类筛选</label>
+              <select class="styled-select">
+                <option value="all">全部分类</option>
+              </select>
+            </div>
+          </div>
 
-  <!-- 💻 PC 端强行对齐 3 列的表头 -->
-  <div class="library-table-header">
-    <div>模型名称</div>
-    <div>分类 / 类型</div>
-    <div style="text-align: right;">操作</div>
-  </div>
+        <section class="editor-section">
+          <div class="library-table-header">
+            <div>模型名称</div>
+            <div>分类 / 类型</div>
+            <div style="text-align: right;">操作</div>
+          </div>
+          <div id="library-list" class="editor-group-list"></div>
+        </section>
+      </div>
+    </fieldset>
 
-  <!-- 数据库模型列表核心显示区 -->
-  <div class="library-full-list-container">
-    <section class="library-inventory" aria-label="模型列表" style="width: 100%;">
-      <div id="library-list"></div>
-    </section>
+    <footer class="editor-footer">
+      <p id="library-feedback" class="editor-feedback" role="status"></p>
+      <div class="editor-actions">
+        <button type="button" class="editor-button" onclick="document.querySelector('#library-dialog').close()">关闭</button>
+      </div>
+    </footer>
   </div>
-  <p id="library-feedback" class="library-feedback" role="status"></p>
 </dialog>
 
-<!-- 2. MODEL ADD 添加模型弹窗 -->
-<dialog id="upload-dialog" class="library-dialog" aria-labelledby="upload-dialog-title">
-  <div class="library-heading">
-    <div>
-      <p class="eyebrow">MODEL ADD</p>
-      <h2 id="upload-dialog-title">添加模型</h2>
-    </div>
-    <button id="close-upload" class="dialog-close" aria-label="关闭添加模型弹窗">×</button>
-  </div>
-
-  <div class="import-panel" style="width: 100%; max-width: 540px; margin: 0 auto; padding: 20px 24px;">
-    <form id="import-form">
-      <!-- 拖拽上传文件区域 -->
-      <label class="drop-zone" id="drop-zone" for="model-file">
-        <span class="upload-symbol" aria-hidden="true" style="font-size: 24px; line-height: 1;">＋</span>
-        <strong id="file-caption" style="font-size: 15px; margin: 4px 0;">选择或拖入 GLB 文件</strong>
-        <span style="font-size: 12px; color: var(--muted);">包含贴图的单个 .glb · 最大 25 MiB</span>
-        <input id="model-file" type="file" accept=".glb,model/gltf-binary" required>
-      </label>
-
-      <!-- 双列完美表单，解决 Input 与 Select 错位混淆问题 -->
-      <div class="add-form-group">
-        <div class="add-form-row">
-          <div class="add-form-field">
-            <label for="import-name">模型名称</label>
-            <input id="import-name" type="text" maxlength="80" placeholder="例如：玻璃漏斗" required>
-          </div>
-
-          <div class="add-form-field">
-            <label for="import-category">模型类型 / 分类</label>
-            <select id="import-category" class="styled-select">
-              <!-- 由 JS 从 Supabase 动态加载 -->
-            </select>
-          </div>
-        </div>
+<!-- 2. MODEL ADD 添加模型弹窗 (对齐 Model Editor 规范) -->
+<dialog id="upload-dialog" class="model-editor-style" aria-labelledby="upload-dialog-title">
+  <form id="import-form" class="model-editor-form" novalidate>
+    <header class="editor-header">
+      <div>
+        <p class="eyebrow">MODEL ADD</p>
+        <h2 id="upload-dialog-title">添加模型</h2>
+        <p class="editor-intro">导入包含贴图的 GLB 文件，并为其指定名称与系统分类。</p>
       </div>
+      <button id="close-upload" type="button" class="editor-close" aria-label="关闭添加模型弹窗">×</button>
+    </header>
 
-      <button id="import-submit" class="primary-button" type="submit" style="margin-top: 8px;">上传模型</button>
-    </form>
-    <p id="import-feedback" class="library-feedback" role="status"></p>
-    <p class="library-tip" style="margin-top: 16px; font-size: 12px; color: #738a96; line-height: 1.6;">
-      以 Blender 中导出的米制尺寸展示。当前版本支持静态、未压缩的 GLB 模型。
-    </p>
-  </div>
+    <fieldset class="editor-fields">
+      <div class="editor-body">
+        <section class="editor-section" style="border-top: 0; margin-top: 0; padding-top: 20px;">
+          <label class="drop-zone-card" id="drop-zone" for="model-file">
+            <span class="upload-icon" aria-hidden="true">＋</span>
+            <strong id="file-caption">选择或拖入 GLB 文件</strong>
+            <span class="drop-hint">包含贴图的单个 .glb · 最大 25 MiB</span>
+            <input id="model-file" type="file" accept=".glb,model/gltf-binary" required style="display:none;">
+          </label>
+        </section>
+
+        <section class="editor-section">
+          <div class="editor-group-row">
+            <label class="editor-field">
+              <span class="editor-field-title">模型名称</span>
+              <input id="import-name" type="text" maxlength="80" placeholder="例如：玻璃漏斗" required>
+            </label>
+
+            <label class="editor-field">
+              <span class="editor-field-title">模型类型 / 分类</span>
+              <select id="import-category" class="styled-select">
+                <!-- 由 JS 动态填充 -->
+              </select>
+            </label>
+          </div>
+          <p class="editor-help" style="margin-top: 14px;">以 Blender 中导出的米制尺寸展示。当前版本支持静态、未压缩的 GLB 模型。</p>
+        </section>
+      </div>
+    </fieldset>
+
+    <footer class="editor-footer">
+      <p id="import-feedback" class="editor-feedback" role="status"></p>
+      <div class="editor-actions">
+        <button type="button" class="editor-button" onclick="document.querySelector('#upload-dialog').close()">取消</button>
+        <button id="import-submit" class="editor-button editor-primary" type="submit">上传模型</button>
+      </div>
+    </footer>
+  </form>
 </dialog>
 
 <!-- AR 弹窗 -->
