@@ -34,27 +34,6 @@ function optionSelect(options, value) {
   return select;
 }
 
-/**
- * 后端数据库 API 通信函数：保存数据至 PostgreSQL 数据库
- */
-async function saveModelToDatabase(id, name, config) {
-  const response = await fetch('/api/models', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      id: id,         // 唯一标识（通常对应 context.entry.id）
-      name: name,     // 模型名称
-      config: config  // 模型详细参数与材质/分组设置
-    })
-  });
-
-  const result = await response.json();
-  if (!response.ok || !result.success) {
-    throw new Error(result.error || '保存至数据库失败');
-  }
-  return result.data;
-}
-
 /** A draft editor. The caller owns persistence and the currently displayed model. */
 export function setupModelEditor({ getContext, onSave, onPreview, isBusy = () => false }) {
   const cssURL = new URL('./model-editor.css', import.meta.url).href;
@@ -74,7 +53,7 @@ export function setupModelEditor({ getContext, onSave, onPreview, isBusy = () =>
   heading.append(el('p', 'eyebrow', 'MODEL SETTINGS'));
   const title = el('h2', '', '编辑模型');
   title.id = 'model-editor-title';
-  heading.append(title, el('p', 'editor-intro', '设置展示材质、探索分组与装配动作。保存后会自动同步至 PostgreSQL 数据库。'));
+  heading.append(title, el('p', 'editor-intro', '设置展示材质、探索分组与装配动作。保存后会随网站包一起导出。'));
   const close = button('×', 'editor-close', () => cancel());
   close.id = 'model-editor-close';
   close.setAttribute('aria-label', '取消并关闭编辑');
@@ -93,13 +72,9 @@ export function setupModelEditor({ getContext, onSave, onPreview, isBusy = () =>
   const previewButton = button('预览设置', 'editor-button', () => preview());
   previewButton.id = 'model-editor-preview';
   previewButton.hidden = typeof onPreview !== 'function';
-
-  // 修改保存按钮：点击时直接执行 JavaScript 提交，避免触发原生的 DOM正则校验报错
-  const saveButton = button('保存设置', 'editor-button editor-primary', () => {
-    handleFormSubmit();
-  });
+  const saveButton = button('保存设置', 'editor-button editor-primary');
   saveButton.id = 'model-editor-save';
-
+  saveButton.type = 'submit';
   actions.append(cancelButton, previewButton, saveButton);
   footer.append(feedback, actions);
   form.append(header, fields, footer);
@@ -138,25 +113,14 @@ export function setupModelEditor({ getContext, onSave, onPreview, isBusy = () =>
       });
       throw new Error('请为每个探索分组填写名称。');
     }
-
-    // 确保 glassOpacity 为有效数字类型
-    if (draft.settings.glassOpacity !== undefined) {
-      draft.settings.glassOpacity = Number(draft.settings.glassOpacity) || 0.18;
+    if (draft.settings.assembly.enabled && !draft.settings.assembly.movingGroupIds.length) {
+      assemblyList.querySelector('input')?.focus();
+      throw new Error('启用“观察装配”时，请至少选择一个要移动的分组。');
     }
-
-    // 严谨校验 distanceMm：做数字强制转换，防止空字符串或 NaN
-    if (draft.settings.assembly.enabled) {
-      if (!draft.settings.assembly.movingGroupIds.length) {
-        assemblyList.querySelector('input')?.focus();
-        throw new Error('启用“观察装配”时，请至少选择一个要移动的分组。');
-      }
-
-      const distVal = Number(draft.settings.assembly.distanceMm);
-      if (!Number.isFinite(distVal) || distVal < 1 || distVal > 1000) {
-        body.querySelector('#editor-assembly-distance')?.focus();
-        throw new Error('装配最大移动距离须介于 1 至 1000 mm。');
-      }
-      draft.settings.assembly.distanceMm = distVal;
+    const distance = draft.settings.assembly.distanceMm;
+    if (draft.settings.assembly.enabled && (!Number.isFinite(distance) || distance < 1 || distance > 1000)) {
+      body.querySelector('#editor-assembly-distance')?.focus();
+      throw new Error('装配最大移动距离须介于 1 至 1000 mm。');
     }
   }
   function updateMergeButton() {
@@ -169,6 +133,8 @@ export function setupModelEditor({ getContext, onSave, onPreview, isBusy = () =>
     if (hideLabels.has(group.id)) hideLabels.get(group.id).textContent = name;
   }
   function changeGroups(change) {
+    // Group helpers normalize persisted settings. Keep unfinished form controls
+    // (for example enabled assembly before selecting its moving groups) intact.
     const { enabled, axis, direction, distanceMm } = draft.settings.assembly;
     const glassOpacity = draft.settings.glassOpacity;
     draft.settings = change(draft.settings);
@@ -266,8 +232,8 @@ export function setupModelEditor({ getContext, onSave, onPreview, isBusy = () =>
       return section;
     };
     assemblyList.append(
-        makeChoices('一起移动的分组', 'movingGroupIds', moveLabels),
-        makeChoices('可用开关隐藏的分组（可选）', 'hiddenGroupIds', hideLabels),
+      makeChoices('一起移动的分组', 'movingGroupIds', moveLabels),
+      makeChoices('可用开关隐藏的分组（可选）', 'hiddenGroupIds', hideLabels),
     );
   }
   function render() {
@@ -361,9 +327,7 @@ export function setupModelEditor({ getContext, onSave, onPreview, isBusy = () =>
     distance.max = '1000';
     distance.step = '1';
     distance.value = draft.settings.assembly.distanceMm;
-    distance.addEventListener('input', () => {
-      draft.settings.assembly.distanceMm = Number(distance.value);
-    });
+    distance.addEventListener('input', () => { draft.settings.assembly.distanceMm = distance.valueAsNumber; });
     assemblyRow.append(labeled('移动轴', axis), labeled('移动方向', direction), labeled('最大移动距离（mm）', distance));
     assemblyList = el('div', 'editor-assembly-groups');
     assemblyList.id = 'editor-assembly-groups';
@@ -399,53 +363,21 @@ export function setupModelEditor({ getContext, onSave, onPreview, isBusy = () =>
       status(error?.message || '恢复预览失败，请重试。', true);
     } finally { busy(false); }
   }
-
-  // 抽出独立的提交处理函数，规避原生的 pattern 正则校验机制
-  async function handleFormSubmit() {
-    console.log("👉 [调试] 保存设置被触发，正在准备数据...");
+  form.addEventListener('submit', async event => {
+    event.preventDefault();
     if (working) return;
-    if (isBusy()) {
-      console.warn("⚠️ [调试] isBusy() 返回了 true，保存被拦截");
-      status('模型正在处理，请稍后再保存。', true);
-      return;
-    }
-
+    if (isBusy()) { status('模型正在处理，请稍后再保存。', true); return; }
     try {
       validate();
       busy(true);
-      status('正在保存至数据库…');
+      status('正在保存…');
       const settings = normalized();
-      const payload = {
-        name: draft.name.trim(),
-        description: draft.description.trim(),
-        settings
-      };
-
-      const modelId = context?.entry?.id || 'default_model';
-      console.log("👉 [调试] 准备保存模型，ID:", modelId, " Payload:", payload);
-
-      // 1. 发送 HTTP POST 请求写入后端 PostgreSQL 数据库
-      await saveModelToDatabase(modelId, payload.name, payload);
-
-      // 2. 如果页面外部注册了 onSave 回调，同样进行本地数据同步
-      if (typeof onSave === 'function') {
-        await onSave(payload);
-      }
-
+      await onSave({ name: draft.name.trim(), description: draft.description.trim(), settings });
       previewed = false;
-      status('保存成功！数据已成功写入数据库。');
-      setTimeout(() => dialog.close(), 600);
+      dialog.close();
     } catch (error) {
-      console.error("❌ [保存失败原因]:", error);
       status(error?.message || '保存失败，修改仍保留在此窗口，请重试。', true);
-    } finally {
-      busy(false);
-    }
-  }
-
-  form.addEventListener('submit', async event => {
-    event.preventDefault();
-    handleFormSubmit();
+    } finally { busy(false); }
   });
   dialog.addEventListener('cancel', event => { event.preventDefault(); cancel(); });
 
