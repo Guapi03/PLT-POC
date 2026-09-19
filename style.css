@@ -75,6 +75,7 @@ button[hidden], [hidden] {
     font-weight: 700;
     letter-spacing: 1.7px;
     text-decoration: none;
+    flex-shrink: 0;
 }
 
 .brand-mark {
@@ -99,7 +100,8 @@ button[hidden], [hidden] {
     display: flex;
     align-items: center;
     gap: 10px;
-    flex-wrap: nowrap;
+    flex-wrap: wrap;
+    justify-content: flex-end;
 }
 
 .header-right button, .library-button {
@@ -808,7 +810,7 @@ body.xr-active .header, body.xr-active .workspace {
 }
 
 /* ==========================================
-   模型库弹窗 (#library-dialog) 单列 List 布局
+   模型库弹窗 (#library-dialog) 响应式适配
    ========================================== */
 
 dialog.library-dialog:not([open]) {
@@ -923,11 +925,12 @@ dialog.library-dialog[open] {
     border-color: var(--mint);
 }
 
-/* 表头分类字段说明 (Name / Category / 操作) */
+/* 表头分类字段说明 (Grid 对齐) */
 .library-table-header {
-    display: flex;
+    display: grid;
+    grid-template-columns: 2fr 1fr 140px;
+    gap: 12px;
     align-items: center;
-    justify-content: space-between;
     padding: 10px 28px;
     background: #0a1318;
     border-bottom: 1px solid #1c2e36;
@@ -936,7 +939,11 @@ dialog.library-dialog[open] {
     flex-shrink: 0;
 }
 
-/* 核心滚动视口：彻底改成 List (单列) 模式 */
+.library-table-header span:last-child {
+    text-align: right;
+}
+
+/* 核心滚动视口 */
 .library-grid, .library-inventory {
     flex: 1 1 auto !important;
     min-height: 0 !important;
@@ -953,15 +960,15 @@ dialog.library-dialog[open] {
     scrollbar-width: thin;
 }
 
-/* 单条列表行 (Card/Row) - 加强边框与呼吸感 */
+/* 单条列表行 (使用 Grid 严格与表头对齐) */
 .library-entry {
-    display: flex !important;
+    display: grid !important;
+    grid-template-columns: 2fr 1fr 140px;
+    gap: 12px;
     align-items: center !important;
-    justify-content: space-between !important;
-    gap: 16px;
-    padding: 16px 20px !important;
+    padding: 14px 20px !important;
     background: #0f1c22 !important;
-    border: 1px solid #28414c !important; /* 显式加厚边框，防止黏连 */
+    border: 1px solid #28414c !important;
     border-radius: 10px !important;
     margin-bottom: 0 !important;
     transition: all 0.2s ease;
@@ -973,19 +980,17 @@ dialog.library-dialog[open] {
     background: #14252e !important;
 }
 
-/* 选中的活跃模型项（高亮亮绿边框与文字） */
 .library-entry.active {
     border-color: var(--mint, #7be6cc) !important;
     background: #122b2f !important;
     box-shadow: 0 0 12px rgba(123, 230, 204, 0.08) !important;
 }
 
-/* 列表左侧标题及描述 */
+/* 列表左侧标题 */
 .library-entry-header {
     display: flex;
     flex-direction: column;
     gap: 4px;
-    flex: 1;
     min-width: 0;
 }
 
@@ -994,10 +999,11 @@ dialog.library-dialog[open] {
     font-weight: 500;
     margin: 0;
     color: var(--text);
-    overflow-wrap: anywhere;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
-/* 恢复选中的模型名称为亮绿色 */
 .library-entry.active h3,
 .library-entry h3.active-text,
 .library-entry h3.highlight {
@@ -1008,7 +1014,7 @@ dialog.library-dialog[open] {
     font-size: 12px;
     color: #8fa7b3;
     margin: 2px 0 0;
-    line-height: 1.5;
+    line-height: 1.4;
 }
 
 /* 分类 Badge 标签 */
@@ -1021,12 +1027,14 @@ dialog.library-dialog[open] {
     color: #8eb1be;
     border: 1px solid #2d4b57;
     white-space: nowrap;
+    width: max-content;
 }
 
 /* 右侧操作按钮组 */
 .library-actions {
     display: flex !important;
     align-items: center !important;
+    justify-content: flex-end;
     gap: 8px !important;
     margin-top: 0 !important;
     flex-shrink: 0;
@@ -1034,13 +1042,14 @@ dialog.library-dialog[open] {
 
 .library-actions button {
     height: 32px;
-    padding: 0 14px;
+    padding: 0 12px;
     font-size: 13px;
     border-radius: 6px;
     border: 1px solid #3b5864;
     background: #1a2e38;
     color: #d2e4ea;
     transition: all 0.15s ease;
+    white-space: nowrap;
 }
 
 .library-actions button:hover {
@@ -1048,7 +1057,6 @@ dialog.library-dialog[open] {
     border-color: #507787;
 }
 
-/* “当前使用”激活按钮高亮 */
 .library-actions button.primary,
 .library-actions button[aria-current="true"] {
     background: #17483f !important;
@@ -1194,7 +1202,7 @@ dialog.library-dialog[open] {
     font-size: 14px;
 }
 
-/* 响应式断点 */
+/* 响应式断点 (Responsive Media Queries) */
 @media (min-width: 1500px) {
     .workspace {
         grid-template-columns: minmax(0, 1fr) 390px;
@@ -1267,60 +1275,84 @@ dialog.library-dialog[open] {
     }
 }
 
+/* 移动端/手机端专用优化 (Max-Width 620px) */
 @media (max-width: 620px) {
     .header {
-        padding: 0 16px;
+        padding: 0 12px;
+        height: auto;
+        min-height: 60px;
+        gap: 8px;
     }
     .brand {
-        font-size: 15px;
+        font-size: 14px;
+        gap: 4px;
+        letter-spacing: 1px;
+    }
+    .brand-mark {
+        height: 24px;
+        width: 24px;
+        font-size: 14px;
+        margin-right: 4px;
+    }
+    .header-right {
         gap: 6px;
     }
-    .poc-tag {
+    .header-right button, .library-button {
+        height: 30px;
         font-size: 11px;
+        padding: 0 8px;
+    }
+    .header-right .secondary-button {
+        padding: 0 8px;
+        font-size: 11px;
+    }
+    .poc-tag {
+        font-size: 10px;
+        padding: 3px 6px;
     }
     .workspace {
         display: flex;
         flex-direction: column;
     }
     .viewer {
-        height: 63svh;
-        min-height: 420px;
-        max-height: 650px;
+        height: 55svh;
+        min-height: 380px;
+        max-height: 550px;
     }
     .specimen {
-        top: 22px;
-        left: 22px;
+        top: 16px;
+        left: 16px;
     }
     h1 {
-        font-size: 25px;
+        font-size: 20px;
     }
     .spec {
-        font-size: 12px;
+        font-size: 11px;
     }
     .eyebrow {
         font-size: 10px;
-        margin-bottom: 8px;
+        margin-bottom: 6px;
     }
     .view-tools {
         left: auto;
-        right: 18px;
-        top: 24px;
+        right: 14px;
+        top: 16px;
     }
     .view-choice {
-        padding: 7px 10px;
-        font-size: 12px;
+        padding: 5px 8px;
+        font-size: 11px;
     }
     .viewer-bottom {
-        bottom: 18px;
-        font-size: 11px;
+        bottom: 12px;
+        font-size: 10px;
         flex-wrap: nowrap;
     }
     .scale-note {
-        bottom: 51px;
+        bottom: 42px;
         font-size: 10px;
     }
     .panel {
-        padding: 27px 23px;
+        padding: 20px 16px;
         border-left: 0;
         border-top: 1px solid var(--line);
     }
@@ -1330,30 +1362,31 @@ dialog.library-dialog[open] {
         max-height: 250px;
     }
     .part-button {
-        padding: 13px 10px;
-        gap: 9px;
+        padding: 10px 8px;
+        gap: 6px;
+        font-size: 12px;
     }
     .part-type {
         display: none;
     }
     .part-detail {
-        min-height: 86px;
+        min-height: 70px;
     }
     .panel-footer {
-        font-size: 11px;
-        padding-top: 25px;
+        font-size: 10px;
+        padding-top: 20px;
     }
     .ar-section .ar-note {
-        font-size: 12px !important;
+        font-size: 11px !important;
     }
     .ar-section > p:not(.eyebrow) {
-        font-size: 14px;
+        font-size: 13px;
     }
     .switch-row, .range-label {
-        font-size: 14px;
+        font-size: 13px;
     }
     .part-detail p {
-        font-size: 14px;
+        font-size: 13px;
     }
     .viewer-bottom .text-button {
         font-size: 11px;
@@ -1362,25 +1395,21 @@ dialog.library-dialog[open] {
         font-size: 10px;
     }
     .panel-footer a {
-        font-size: 12px;
-    }
-    .header-right button {
-        padding: 0 8px;
-        font-size: 12px;
-        height: 32px;
+        font-size: 11px;
     }
     .specimen h1 {
-        max-width: 58vw;
-        font-size: 23px;
+        max-width: 60vw;
+        font-size: 20px;
     }
     .library-button {
-        padding: 0 10px;
+        padding: 0 8px;
     }
     .specimen .spec {
         max-width: 65vw;
         overflow-wrap: anywhere;
     }
 
+    /* 移动端模型库 Modal 弹窗优化 */
     dialog.library-dialog {
         width: calc(100% - 16px);
         height: calc(100svh - 24px);
@@ -1388,25 +1417,42 @@ dialog.library-dialog[open] {
         border-radius: 12px;
     }
     .library-heading {
-        padding: 16px 18px 12px;
+        padding: 14px 16px 10px;
     }
     .library-filter-bar {
-        padding: 10px 18px;
+        padding: 10px 16px;
         flex-direction: column;
         align-items: stretch;
         gap: 8px;
     }
+    .library-table-header {
+        grid-template-columns: 1fr 1fr 80px;
+        padding: 8px 16px;
+        font-size: 11px;
+    }
     .library-grid, .library-inventory {
-        padding: 14px 16px 20px !important;
+        padding: 12px 14px 20px !important;
     }
     .library-entry {
-        flex-direction: column !important;
-        align-items: flex-start !important;
-        gap: 12px !important;
+        grid-template-columns: 1fr 1fr 100px !important;
+        gap: 8px !important;
+        padding: 12px 12px !important;
+    }
+    .library-entry h3 {
+        font-size: 13px;
+    }
+    .category-badge {
+        font-size: 11px;
+        padding: 2px 6px;
     }
     .library-actions {
         width: 100%;
         justify-content: flex-end;
+    }
+    .library-actions button {
+        height: 28px;
+        padding: 0 8px;
+        font-size: 11px;
     }
 }
 
