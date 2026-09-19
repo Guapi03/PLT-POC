@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "defaultId": "model-9a24d45c-5214-4edd-95db-570d0be83c1d",
+  "defaultId": "model-537dc45b-a66a-4f1b-ad82-376c21bc0f79",
   "models": [
     {
       "id": "glass-bottle",
@@ -34,6 +34,63 @@
             "meshIds": [
               "mesh-1",
               "mesh-2",
+              "mesh-3"
+            ],
+            "preset": "auto"
+          }
+        ],
+        "glassOpacity": 0.18,
+        "assembly": {
+          "enabled": false,
+          "movingGroupIds": [],
+          "hiddenGroupIds": [],
+          "axis": "y",
+          "direction": 1,
+          "distanceMm": 180
+        }
+      }
+    },
+    {
+      "id": "model-537dc45b-a66a-4f1b-ad82-376c21bc0f79",
+      "name": "Multiple Adapter Three-Way Connector",
+      "src": "assets/model-537dc45b-a66a-4f1b-ad82-376c21bc0f79.glb",
+      "profile": "generic",
+      "description": "3-Way Adapter 19/26×2-24/29",
+      "settings": {
+        "version": 1,
+        "groups": [
+          {
+            "id": "g-0",
+            "name": "Body",
+            "description": "Main glass body connecting the three joint fittings",
+            "meshIds": [
+              "mesh-0"
+            ],
+            "preset": "auto"
+          },
+          {
+            "id": "g-1",
+            "name": "Joint-24/29-Bottom",
+            "description": "Bottom vertical joint, 24/29 standard ground-glass fitting, used for connecting to the main apparatus",
+            "meshIds": [
+              "mesh-1"
+            ],
+            "preset": "auto"
+          },
+          {
+            "id": "g-2",
+            "name": "Joint-19/26-Top",
+            "description": "Top vertical joint, 19/26 standard ground-glass fitting",
+            "meshIds": [
+              "mesh-2"
+            ],
+            "preset": "auto"
+          },
+          {
+            "id": "g-3",
+            "name": "Joint-19/26-Side",
+            "description": "Side-angled joint, 19/26 standard ground-glass fitting",
+            "meshIds": [
               "mesh-3"
             ],
             "preset": "auto"
