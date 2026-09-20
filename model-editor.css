@@ -1,6 +1,6 @@
-/* 强制纠正 dialog 盒模型与 Flex 布局计算 */
+/* å¼ºåˆ¶çº æ­£ dialog ç›’æ¨¡åž‹ä¸Ž Flex å¸ƒå±€è®¡ç®— */
 dialog.model-editor {
- width: min(880px, calc(100% - 32px));
+ width: min(860px, calc(100% - 32px));
  height: min(92svh, 1020px);
  max-height: min(92svh, 1020px);
  padding: 0;
@@ -17,7 +17,7 @@ dialog.model-editor::backdrop {
  backdrop-filter: blur(3px);
 }
 
-/* 关键修复：确保表单容器充满 dialog 并限制最小高度为 0，防止被内容撑开 */
+/* å…³é”®ä¿®å¤ï¼šç¡®ä¿è¡¨å•å®¹å™¨å……æ»¡ dialog å¹¶é™åˆ¶æœ€å°é«˜åº¦ä¸º 0ï¼Œé˜²æ­¢è¢«å†…å®¹æ’‘å¼€ */
 .model-editor-form {
  display: flex !important;
  flex-direction: column !important;
@@ -48,7 +48,7 @@ dialog.model-editor::backdrop {
 }
 .editor-close:hover { background: #2b414b; }
 
-/* 关键修复：强制开启中间视口区域的纵向独立滚动 */
+/* å…³é”®ä¿®å¤ï¼šå¼ºåˆ¶å¼€å¯ä¸­é—´è§†å£åŒºåŸŸçš„çºµå‘ç‹¬ç«‹æ»šåŠ¨ */
 .editor-fields {
  border: 0 !important;
  padding: 0 !important;
@@ -96,45 +96,7 @@ dialog.model-editor::backdrop {
 .editor-count { font-size: 11px; color: #8ba8b5; white-space: nowrap; }
 .editor-check { display: flex; align-items: center; gap: 9px; min-height: 28px; font-size: 13px; line-height: 1.5; cursor: pointer; min-width: 0; }
 .editor-check span { overflow-wrap: anywhere; min-width: 0; }
-
-/* 3 列排版：名称 | 材质 | 结构选中颜色 */
-.editor-group-row {
- display: grid;
- grid-template-columns: minmax(0, 1.2fr) minmax(120px, 1fr) minmax(130px, 1fr);
- gap: 14px;
-}
-
-/* 🎨 结构模式/部件列表点击高亮颜色调色器样式 */
-.color-picker-container {
- display: flex;
- align-items: center;
- gap: 8px;
- background: #0e1c23;
- padding: 4px 10px;
- border: 1px solid #3f5b67;
- border-radius: 6px;
- min-height: 42px;
- box-sizing: border-box;
-}
-
-.editor-color-input {
- width: 26px !important;
- height: 26px !important;
- min-height: 26px !important;
- padding: 0 !important;
- border: 0 !important;
- background: none !important;
- cursor: pointer;
- flex-shrink: 0;
-}
-
-.color-val-text {
- font-size: 12px;
- font-family: 'IBM Plex Mono', monospace;
- color: var(--mint, #7be6cc);
- text-transform: uppercase;
-}
-
+.editor-group-row { display: grid; grid-template-columns: minmax(0,1.4fr) minmax(160px,1fr); gap: 16px; }
 .editor-group-bottom { display: flex; justify-content: space-between; align-items: flex-start; gap: 20px; }
 .editor-members { min-width: 0; font-size: 11px; color: #91acb7; line-height: 1.7; }
 .editor-members summary { cursor: pointer; min-height: 30px; padding: 5px 0; user-select: none; }

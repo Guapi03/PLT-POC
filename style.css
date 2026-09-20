@@ -401,7 +401,7 @@ h1 {
 
 .part-detail {
     min-height: 80px;
-    padding: 16px 2px;
+    padding: 16px 2px 8px;
 }
 
 .part-detail > span {
@@ -1051,7 +1051,95 @@ body.xr-active .workspace {
 }
 
 /* ==========================================================================
-   8. 响应式与媒体查询 (Responsive)
+   8. 部件颜色调色板 (Color Palette)
+   ========================================================================== */
+.color-palette-container {
+    margin-top: 14px;
+    padding: 14px;
+    background: #1c2b33;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+}
+
+.palette-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text);
+}
+
+.part-name {
+    font-size: 12px;
+    color: var(--mint);
+    font-family: 'IBM Plex Mono', monospace;
+}
+
+.color-swatches {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+    margin-bottom: 12px;
+}
+
+.color-swatch {
+    width: 100%;
+    height: 30px;
+    border-radius: 6px;
+    border: 2px solid transparent;
+    cursor: pointer;
+    transition: transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+    padding: 0;
+}
+
+.color-swatch:hover {
+    transform: scale(1.06);
+}
+
+.color-swatch.active {
+    border-color: var(--mint) !important;
+    box-shadow: 0 0 8px rgba(123, 230, 204, 0.4);
+}
+
+.custom-color-picker {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 12px;
+    color: var(--muted);
+    margin-top: 6px;
+}
+
+.custom-color-picker input[type="color"] {
+    -webkit-appearance: none;
+    appearance: none;
+    border: 1px solid var(--line-light);
+    width: 32px;
+    height: 32px;
+    border-radius: 6px;
+    cursor: pointer;
+    background: none;
+    padding: 0;
+}
+
+.custom-color-picker input[type="color"]::-webkit-color-swatch-wrapper {
+    padding: 0;
+}
+
+.custom-color-picker input[type="color"]::-webkit-color-swatch {
+    border: none;
+    border-radius: 5px;
+}
+
+.custom-color-picker input[type="color"]::-moz-color-swatch {
+    border: none;
+    border-radius: 5px;
+}
+
+/* ==========================================================================
+   9. 响应式与媒体查询 (Responsive)
    ========================================================================== */
 @media (min-width: 1500px) {
     .workspace { grid-template-columns: minmax(0, 1fr) 390px; }

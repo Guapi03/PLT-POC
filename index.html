@@ -69,6 +69,28 @@
         <span id="detail-title">从外形，看到内部。</span>
         <p id="detail-copy">选择部件查看详情。</p>
       </div>
+
+      <!-- 新增：部件颜色调整调色板 (Color Palette) -->
+      <div id="color-palette-container" class="color-palette-container">
+        <div class="palette-header">
+          <span>部件颜色调整</span>
+          <span id="selected-part-name" class="part-name">（未选中部件）</span>
+        </div>
+        <div class="color-swatches">
+          <button type="button" class="color-swatch active" data-color="#90EE90" style="background-color: #90EE90;" title="浅绿"></button>
+          <button type="button" class="color-swatch" data-color="#FF4D4F" style="background-color: #FF4D4F;" title="红色"></button>
+          <button type="button" class="color-swatch" data-color="#1890FF" style="background-color: #1890FF;" title="蓝色"></button>
+          <button type="button" class="color-swatch" data-color="#52C41A" style="background-color: #52C41A;" title="绿色"></button>
+          <button type="button" class="color-swatch" data-color="#FAAD14" style="background-color: #FAAD14;" title="黄色"></button>
+          <button type="button" class="color-swatch" data-color="#722ED1" style="background-color: #722ED1;" title="紫色"></button>
+          <button type="button" class="color-swatch" data-color="#222222" style="background-color: #222222;" title="黑色"></button>
+          <button type="button" class="color-swatch" data-color="#FFFFFF" style="background-color: #FFFFFF; border: 1px solid #304850;" title="白色"></button>
+        </div>
+        <div class="custom-color-picker">
+          <label for="custom-color-input">自定义颜色：</label>
+          <input type="color" id="custom-color-input" value="#90EE90">
+        </div>
+      </div>
     </section>
 
     <section id="assembly-section" class="control-section assembly-controls">
