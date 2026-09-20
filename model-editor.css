@@ -1,8 +1,8 @@
-/* 强制纠正 dialog 盒模型与 Flex 布局计算 */
+/* 强制纠正 dialog 盒模型 */
 dialog.model-editor {
- width: min(1180px, calc(100% - 32px));
- height: min(90svh, 880px);
- max-height: min(90svh, 880px);
+ width: min(820px, calc(100% - 32px));
+ height: min(88svh, 820px);
+ max-height: min(88svh, 820px);
  padding: 0;
  background: #14242c;
  border: 1px solid #425c65;
@@ -47,21 +47,13 @@ dialog.model-editor::backdrop {
 }
 .editor-close:hover { background: #2b414b; color: #fff; }
 
-/* 主主体布局：电脑端双栏 */
-.editor-main-layout {
- display: grid;
- grid-template-columns: minmax(0, 1fr) 420px;
- flex: 1 1 auto;
- min-height: 0;
- overflow: hidden;
-}
-
 .editor-fields {
  border: 0 !important;
  padding: 0 !important;
  margin: 0 !important;
  min-width: 0 !important;
  min-height: 0 !important;
+ flex: 1 1 auto !important;
  overflow-y: auto !important;
  overflow-x: hidden !important;
  overscroll-behavior: contain;
@@ -100,26 +92,35 @@ dialog.model-editor::backdrop {
 .editor-text-button { border: 0; padding: 4px 0; background: none; color: var(--mint,#7be6cc); white-space: nowrap; }
 
 .editor-group-list { display: grid; gap: 12px; margin-top: 14px; }
-.editor-group { padding: 14px 15px 12px; background: #1a2e37; border: 1px solid #304b57; border-radius: 9px; transition: border-color 0.2s, background 0.2s; }
-.editor-group:hover { border-color: var(--mint,#7be6cc); background: #1f3743; }
+.editor-group { padding: 14px 15px 12px; background: #1a2e37; border: 1px solid #304b57; border-radius: 9px; }
 .editor-group-heading { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 12px; }
 .editor-count { font-size: 11px; color: #8ba8b5; white-space: nowrap; }
 .editor-check { display: flex; align-items: center; gap: 8px; min-height: 26px; font-size: 13px; line-height: 1.5; cursor: pointer; min-width: 0; }
 
-/* 3 列排版：名称 | 材质 | 标识颜色 */
+/* 还原为标准的双栏结构 */
 .editor-group-row {
  display: grid;
- grid-template-columns: minmax(0, 1.2fr) minmax(130px, 1fr) minmax(130px, 1fr);
- gap: 12px;
+ grid-template-columns: minmax(0, 1.2fr) minmax(180px, 1fr);
+ gap: 14px;
 }
 
-/* 🎨 探索/结构标识颜色调色组件 */
+/* 全局控制项样式 */
+.editor-global-controls {
+ margin-top: 20px;
+ padding-top: 16px;
+ border-top: 1px dashed #304850;
+ display: grid;
+ grid-template-columns: 1fr 1fr;
+ gap: 20px;
+}
+
+/* 🎨 通用高亮调色盒组件 */
 .color-picker-container {
  display: flex;
  align-items: center;
- gap: 8px;
+ gap: 10px;
  background: #0e1c23;
- padding: 5px 8px;
+ padding: 5px 12px;
  border: 1px solid #3f5b67;
  border-radius: 6px;
  height: 40px;
@@ -137,7 +138,7 @@ dialog.model-editor::backdrop {
 }
 
 .color-val-text {
- font-size: 12px;
+ font-size: 13px;
  font-family: 'IBM Plex Mono', monospace;
  color: var(--mint, #7be6cc);
  text-transform: uppercase;
@@ -148,7 +149,7 @@ dialog.model-editor::backdrop {
 .editor-members summary { cursor: pointer; min-height: 26px; padding: 2px 0; user-select: none; }
 .editor-members ul { padding-left: 18px; margin: 4px 0 6px; }
 
-.editor-glass { padding: 16px 0 0; }
+.editor-glass { padding: 0; }
 .editor-range-title { display: flex; justify-content: space-between; align-items: center; gap: 16px; font-size: 13px; }
 .editor-value { font-variant-numeric: tabular-nums; font-family: 'IBM Plex Mono',monospace; color: var(--mint,#7be6cc); }
 .editor-enable { color: var(--mint,#7be6cc); }
@@ -160,59 +161,6 @@ dialog.model-editor::backdrop {
 .editor-choice-section { border: 1px solid #304b57; min-width: 0; border-radius: 8px; padding: 8px 12px 10px; background: #172a32; }
 .editor-choice-section legend { font-size: 11px; color: #a9c1ca; padding: 0 4px; }
 
-/* 右侧 3D Preview 容器样式 (对齐主视图 #canvas-host 逻辑) */
-.editor-preview-panel {
- display: flex;
- flex-direction: column;
- background: #0e1c23;
- border-left: 1px solid #304850;
- height: 100%;
- overflow: hidden;
- position: relative;
-}
-
-.editor-preview-header {
- display: flex;
- align-items: center;
- justify-content: space-between;
- padding: 12px 16px;
- background: #142730;
- border-bottom: 1px solid #253a44;
- z-index: 2;
-}
-
-.editor-preview-title {
- font-size: 12px;
- font-weight: 500;
- color: #c0d5de;
-}
-
-.editor-preview-badge {
- font-size: 10px;
- background: rgba(123, 230, 204, 0.15);
- color: var(--mint, #7be6cc);
- border: 1px solid rgba(123, 230, 204, 0.3);
- padding: 2px 8px;
- border-radius: 12px;
-}
-
-.editor-preview-canvas-host {
- flex: 1 1 auto;
- width: 100%;
- height: 100%;
- min-height: 280px;
- position: relative;
- touch-action: none;
-}
-
-.editor-preview-canvas-host canvas {
- position: absolute;
- inset: 0;
- display: block;
- width: 100% !important;
- height: 100% !important;
-}
-
 .editor-footer {
  display: flex; align-items: center; justify-content: space-between; gap: 20px;
  flex-shrink: 0; padding: 14px 28px; border-top: 1px solid #304850; background: #14242c;
@@ -221,7 +169,7 @@ dialog.model-editor::backdrop {
 .editor-feedback.error { color: #ffc1ad; }
 .editor-actions { display: flex; align-items: center; gap: 9px; flex-shrink: 0; }
 
-/* 📱 手机端专用布局 (Max-width: 620px) */
+/* 📱 手机端适配 */
 @media(max-width: 620px) {
  dialog.model-editor {
   width: calc(100% - 16px);
@@ -232,29 +180,9 @@ dialog.model-editor::backdrop {
 
  .editor-header { padding: 14px 16px; }
  .model-editor .editor-header h2 { font-size: 18px; }
-
- /* 手机端：Preview 位于上方（220px），Form 表单在下方 */
- .editor-main-layout {
-  display: flex;
-  flex-direction: column;
- }
-
- .editor-preview-panel {
-  order: 1;
-  height: 220px;
-  min-height: 220px;
-  border-left: 0;
-  border-bottom: 1px solid #304850;
-  flex-shrink: 0;
- }
-
- .editor-fields {
-  order: 2;
-  flex: 1;
- }
-
  .editor-body { padding: 0 16px 20px; }
  .editor-group-row { grid-template-columns: 1fr; gap: 0; }
+ .editor-global-controls { grid-template-columns: 1fr; gap: 14px; }
  .editor-assembly-row { grid-template-columns: 1fr 1fr; gap: 0 10px; }
  .editor-assembly-row .editor-field:last-child { grid-column: 1/-1; }
  .editor-assembly-groups { grid-template-columns: 1fr; gap: 10px; }

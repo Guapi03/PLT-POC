@@ -1,5 +1,3 @@
-import * as THREE from 'three';
-import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { normalizeModelSettings, mergeGroups, splitGroup } from './model-settings.js';
 
 // 纯粹的展示材质选项
@@ -93,30 +91,15 @@ export function setupModelEditor({ getContext, onSave, isBusy = () => false }) {
   heading.append(el('p', 'eyebrow', 'MODEL SETTINGS'));
   const title = el('h2', '', '编辑模型');
   title.id = 'model-editor-title';
-  heading.append(title, el('p', 'editor-intro', '设置展示材质、探索分组与结构标识颜色。'));
+  heading.append(title, el('p', 'editor-intro', '设置展示材质、探索分组与全局高亮颜色。'));
   const close = button('×', 'editor-close', () => cancel());
   close.id = 'model-editor-close';
   close.setAttribute('aria-label', '取消并关闭编辑');
   header.append(heading, close);
 
-  const mainLayout = el('div', 'editor-main-layout');
-
   const fields = el('fieldset', 'editor-fields');
   const body = el('div', 'editor-body');
   fields.append(body);
-
-  // 3D Preview 面板
-  const previewPanel = el('div', 'editor-preview-panel');
-  const previewHeader = el('div', 'editor-preview-header');
-  previewHeader.append(el('span', 'editor-preview-title', '探索结构预览 (Solid Mode)'));
-  previewHeader.append(el('span', 'editor-preview-badge', '3D Preview'));
-
-  // 预览 Canvas 宿主容器 (对齐主视口 #canvas-host)
-  const previewCanvasHost = el('div', 'editor-preview-canvas-host');
-  previewCanvasHost.id = 'editor-preview-canvas-host';
-  previewPanel.append(previewHeader, previewCanvasHost);
-
-  mainLayout.append(fields, previewPanel);
 
   const footer = el('footer', 'editor-footer');
   const feedback = el('p', 'editor-feedback');
@@ -133,7 +116,7 @@ export function setupModelEditor({ getContext, onSave, isBusy = () => false }) {
   actions.append(cancelButton, saveButton);
   footer.append(feedback, actions);
 
-  form.append(header, mainLayout, footer);
+  form.append(header, fields, footer);
   dialog.append(form);
   document.body.append(dialog);
 
@@ -142,150 +125,6 @@ export function setupModelEditor({ getContext, onSave, isBusy = () => false }) {
   let groupList, assemblyList, mergeButton, assemblyFields, nameInput;
   let moveLabels = new Map();
   let hideLabels = new Map();
-
-  // 3D 预览相关变量
-  let pRenderer, pScene, pCamera, pControls, pModelGroup, hoveredGroupId = null, animId = null;
-
-  const defaultPalette = [
-    '#4ea8de', '#560bad', '#f72585', '#4895ef', '#3a0ca3',
-    '#b5179e', '#7209b7', '#4361ee', '#4cc9f0'
-  ];
-
-  // 从 context 中兼容提取网格数组
-  function getContextMeshes() {
-    if (!context) return [];
-    if (Array.isArray(context.meshes) && context.meshes.length > 0) {
-      return context.meshes.map(m => m.isMesh ? m : (m.mesh || m.node || m)).filter(m => m && m.isMesh);
-    }
-    if (context.gltf && context.gltf.scene) {
-      const list = [];
-      context.gltf.scene.traverse(node => {
-        if (node.isMesh) list.push(node);
-      });
-      return list;
-    }
-    return [];
-  }
-
-  // 初始化 3D Preview 视口
-  function initPreview() {
-    if (!previewCanvasHost || pRenderer) return;
-
-    pScene = new THREE.Scene();
-    pScene.background = new THREE.Color('#0e1c23');
-
-    // 多角度光源配置
-    const ambient = new THREE.AmbientLight(0xffffff, 0.95);
-    const dirLight1 = new THREE.DirectionalLight(0xffffff, 0.9);
-    dirLight1.position.set(5, 12, 8);
-    const dirLight2 = new THREE.DirectionalLight(0xffffff, 0.5);
-    dirLight2.position.set(-5, -8, -6);
-    pScene.add(ambient, dirLight1, dirLight2);
-
-    pCamera = new THREE.PerspectiveCamera(40, 1, 0.01, 100);
-
-    pRenderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-    pRenderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-
-    previewCanvasHost.replaceChildren(pRenderer.domElement);
-
-    pControls = new OrbitControls(pCamera, pRenderer.domElement);
-    pControls.enableDamping = true;
-    pControls.dampingFactor = 0.05;
-
-    // 监听容器真实尺寸变化
-    const resizeObserver = new ResizeObserver(() => {
-      resizePreview();
-    });
-    resizeObserver.observe(previewCanvasHost);
-
-    function animate() {
-      animId = requestAnimationFrame(animate);
-      if (pControls) pControls.update();
-      if (pRenderer && pScene && pCamera) {
-        pRenderer.render(pScene, pCamera);
-      }
-    }
-    animate();
-  }
-
-  // 刷新 Preview Canvas 视口大小
-  function resizePreview() {
-    if (!previewCanvasHost || !pRenderer || !pCamera) return;
-    const rect = previewCanvasHost.getBoundingClientRect();
-    const width = rect.width || previewCanvasHost.clientWidth || 300;
-    const height = rect.height || previewCanvasHost.clientHeight || 250;
-
-    if (width > 0 && height > 0) {
-      pCamera.aspect = width / height;
-      pCamera.updateProjectionMatrix();
-      pRenderer.setSize(width, height, true);
-    }
-  }
-
-  // 克隆场景网格并根据标识颜色绘制
-  function updatePreviewScene() {
-    if (!pScene || !context) return;
-
-    if (pModelGroup) {
-      pScene.remove(pModelGroup);
-    }
-    pModelGroup = new THREE.Group();
-
-    const meshesSource = getContextMeshes();
-
-    const meshToGroup = new Map();
-    draft.settings.groups.forEach((g, idx) => {
-      g.meshIds.forEach(id => meshToGroup.set(String(id), { group: g, index: idx }));
-    });
-
-    meshesSource.forEach((mesh, index) => {
-      if (!mesh || !mesh.geometry) return;
-
-      const clonedGeom = mesh.geometry.clone();
-
-      const meshId = String(mesh.id || mesh.name || mesh.uuid || index);
-      const groupInfo = meshToGroup.get(meshId) || meshToGroup.get(String(mesh.name));
-      const isHovered = groupInfo && hoveredGroupId === groupInfo.group.id;
-
-      let colorHex = (groupInfo && groupInfo.group.customColor)
-          ? groupInfo.group.customColor
-          : defaultPalette[(groupInfo ? groupInfo.index : index) % defaultPalette.length];
-
-      const mat = new THREE.MeshPhongMaterial({
-        color: isHovered ? '#7be6cc' : colorHex,
-        emissive: isHovered ? '#1a5c4e' : '#000000',
-        shininess: isHovered ? 90 : 35,
-        side: THREE.DoubleSide
-      });
-
-      const previewMesh = new THREE.Mesh(clonedGeom, mat);
-
-      mesh.updateWorldMatrix(true, false);
-      previewMesh.applyMatrix4(mesh.matrixWorld);
-
-      pModelGroup.add(previewMesh);
-    });
-
-    pScene.add(pModelGroup);
-
-    // 自动置中与最佳视角计算
-    const box = new THREE.Box3().setFromObject(pModelGroup);
-    if (!box.isEmpty()) {
-      const center = new THREE.Vector3();
-      box.getCenter(center);
-      const size = new THREE.Vector3();
-      box.getSize(size);
-      const maxDim = Math.max(size.x, size.y, size.z, 0.01);
-
-      pControls.target.copy(center);
-      const fov = pCamera.fov * (Math.PI / 180);
-      let cameraZ = Math.abs(maxDim / 2 / Math.tan(fov / 2)) * 1.85;
-      pCamera.position.set(center.x + cameraZ * 0.5, center.y + cameraZ * 0.4, center.z + cameraZ);
-      pCamera.lookAt(center);
-      pControls.update();
-    }
-  }
 
   function status(message, error = false) {
     feedback.textContent = message;
@@ -301,13 +140,9 @@ export function setupModelEditor({ getContext, onSave, isBusy = () => false }) {
   }
 
   function normalized() {
-    const norm = normalizeModelSettings(copy(draft.settings), context.meshes, { category: draft.category });
-    norm.groups.forEach((g, idx) => {
-      const draftGroup = draft.settings.groups[idx];
-      if (draftGroup && draftGroup.customColor) {
-        g.customColor = draftGroup.customColor;
-      }
-    });
+    const norm = normalizeModelSettings(copy(draft.settings), context.meshes || [], { category: draft.category });
+    // 保存全局部件高亮/选中颜色
+    norm.highlightColor = draft.settings.highlightColor || '#7be6cc';
     return norm;
   }
 
@@ -348,28 +183,21 @@ export function setupModelEditor({ getContext, onSave, isBusy = () => false }) {
   function changeGroups(change) {
     const { enabled, axis, direction, distanceMm } = draft.settings.assembly;
     const glassOpacity = draft.settings.glassOpacity;
+    const highlightColor = draft.settings.highlightColor;
     draft.settings = change(draft.settings);
     Object.assign(draft.settings.assembly, { enabled, axis, direction, distanceMm });
     draft.settings.glassOpacity = glassOpacity;
+    draft.settings.highlightColor = highlightColor;
   }
 
   function renderGroups() {
-    const meshes = getContextMeshes();
+    const meshes = context.meshes || [];
     const meshNames = new Map(meshes.map(mesh => [mesh.id || mesh.name, mesh.name || mesh.id]));
     groupList.replaceChildren();
 
     draft.settings.groups.forEach((group, index) => {
       const card = el('section', 'editor-group');
       card.dataset.groupId = group.id;
-
-      card.addEventListener('mouseenter', () => {
-        hoveredGroupId = group.id;
-        updatePreviewScene();
-      });
-      card.addEventListener('mouseleave', () => {
-        hoveredGroupId = null;
-        updatePreviewScene();
-      });
 
       const top = el('div', 'editor-group-heading');
       const select = el('input');
@@ -386,7 +214,7 @@ export function setupModelEditor({ getContext, onSave, isBusy = () => false }) {
       top.append(choice, el('span', 'editor-count', `${group.meshIds.length} 个网格`));
       card.append(top);
 
-      // 第一排：部件名称 | 展示材质 | 探索标识颜色
+      // 第一排：部件名称 | 展示材质
       const row = el('div', 'editor-group-row');
 
       const name = el('input');
@@ -400,29 +228,9 @@ export function setupModelEditor({ getContext, onSave, isBusy = () => false }) {
       presetSelect.dataset.groupPreset = group.id;
       presetSelect.addEventListener('change', () => { group.preset = presetSelect.value; });
 
-      // 🎨 专属于【探索/结构模式】下显示该部件的自定义颜色 Setting
-      const colorPickerContainer = el('div', 'color-picker-container');
-      const initialColor = group.customColor || defaultPalette[index % defaultPalette.length];
-      group.customColor = initialColor;
-
-      const colorInput = el('input', 'editor-color-input');
-      colorInput.type = 'color';
-      colorInput.value = initialColor;
-
-      const colorValText = el('span', 'color-val-text', initialColor);
-
-      colorInput.addEventListener('input', (e) => {
-        group.customColor = e.target.value;
-        colorValText.textContent = e.target.value;
-        updatePreviewScene();
-      });
-
-      colorPickerContainer.append(colorInput, colorValText);
-
       row.append(
           labeled('部件名称', name),
-          labeled('展示材质', presetSelect),
-          labeled('探索/结构标识颜色', colorPickerContainer)
+          labeled('展示材质', presetSelect)
       );
       card.append(row);
 
@@ -445,11 +253,10 @@ export function setupModelEditor({ getContext, onSave, isBusy = () => false }) {
 
       if (group.meshIds.length > 1) {
         const split = button('拆分分组', 'editor-text-button', () => {
-          changeGroups(settings => splitGroup(settings, group.id, context.meshes));
+          changeGroups(settings => splitGroup(settings, group.id, context.meshes || []));
           selectedGroups.delete(group.id);
           renderGroups();
           renderAssembly();
-          updatePreviewScene();
           status('已拆成独立网格分组。保存后生效。');
         });
         split.dataset.splitGroup = group.id;
@@ -496,6 +303,8 @@ export function setupModelEditor({ getContext, onSave, isBusy = () => false }) {
 
   function render() {
     body.replaceChildren();
+
+    // 1. 模型信息
     const identity = el('section', 'editor-section editor-identity');
     identity.append(el('h3', '', '模型信息'));
     nameInput = el('input');
@@ -525,6 +334,7 @@ export function setupModelEditor({ getContext, onSave, isBusy = () => false }) {
     );
     body.append(identity);
 
+    // 2. 探索分组与全局高亮颜色设置
     const groups = el('section', 'editor-section');
     const groupHeading = el('div', 'editor-section-heading');
     groupHeading.append(el('h3', '', '探索分组'));
@@ -534,16 +344,41 @@ export function setupModelEditor({ getContext, onSave, isBusy = () => false }) {
       selectedGroups.clear();
       renderGroups();
       renderAssembly();
-      updatePreviewScene();
       status('已合并为一个探索分组，点击时会一起高亮。');
     });
     mergeButton.id = 'editor-merge-groups';
     groupHeading.append(mergeButton);
-    groups.append(groupHeading, el('p', 'editor-help', '选中多个分组后合并，在此设定各部件在探索/结构模式下的专属展示颜色。'));
+    groups.append(groupHeading, el('p', 'editor-help', '组织模型部件分组。'));
     groupList = el('div', 'editor-group-list');
     groupList.id = 'editor-group-list';
     groups.append(groupList);
 
+    // 全局控制：结构高亮 / 部件选中颜色
+    const globalControls = el('div', 'editor-global-controls');
+
+    // 🎨 通用部件高亮颜色选择器
+    const highlightColorContainer = el('div', 'color-picker-container');
+    const currentHighlightColor = draft.settings.highlightColor || '#7be6cc';
+    draft.settings.highlightColor = currentHighlightColor;
+
+    const highlightColorInput = el('input', 'editor-color-input');
+    highlightColorInput.type = 'color';
+    highlightColorInput.id = 'editor-highlight-color';
+    highlightColorInput.value = currentHighlightColor;
+
+    const highlightValText = el('span', 'color-val-text', currentHighlightColor);
+
+    highlightColorInput.addEventListener('input', (e) => {
+      draft.settings.highlightColor = e.target.value;
+      highlightValText.textContent = e.target.value;
+    });
+
+    highlightColorContainer.append(highlightColorInput, highlightValText);
+
+    const highlightField = labeled('部件选中 / 结构高亮颜色', highlightColorContainer);
+    highlightField.append(el('p', 'editor-help', '控制在页面右侧部件列表中选中部件时，模型上显示的统一高亮颜色。'));
+
+    // 玻璃不透明度滑块
     const glass = el('div', 'editor-glass');
     const range = el('input');
     range.id = 'editor-glass-opacity';
@@ -551,7 +386,7 @@ export function setupModelEditor({ getContext, onSave, isBusy = () => false }) {
     range.min = '0.04';
     range.max = '0.85';
     range.step = '0.01';
-    range.value = draft.settings.glassOpacity;
+    range.value = draft.settings.glassOpacity || 0.15;
     const output = el('output', 'editor-value', Number(range.value).toFixed(2));
     output.htmlFor = range.id;
     const rangeTitle = el('div', 'editor-range-title');
@@ -563,9 +398,12 @@ export function setupModelEditor({ getContext, onSave, isBusy = () => false }) {
       output.textContent = Number(range.value).toFixed(2);
     });
     glass.append(rangeTitle, range, el('p', 'editor-help', '用于控制透明/磨砂玻璃材质的基础不透明度。'));
-    groups.append(glass);
+
+    globalControls.append(highlightField, glass);
+    groups.append(globalControls);
     body.append(groups);
 
+    // 3. 观察装配
     const assembly = el('section', 'editor-section');
     const assemblyHeading = el('div', 'editor-section-heading');
     assemblyHeading.append(el('h3', '', '观察装配'));
@@ -612,7 +450,6 @@ export function setupModelEditor({ getContext, onSave, isBusy = () => false }) {
 
   function cancel() {
     if (working) return;
-    if (animId) cancelAnimationFrame(animId);
     dialog.close();
   }
 
@@ -643,11 +480,12 @@ export function setupModelEditor({ getContext, onSave, isBusy = () => false }) {
     open() {
       if (dialog.open || isBusy()) return false;
       context = getContext();
-      if (!context?.entry) return false;
+      if (!context?.entry) {
+        console.warn('模型编辑打开失败: context 或 entry 不存在', context);
+        return false;
+      }
 
-      const meshes = getContextMeshes();
-      if (!meshes.length) return false;
-
+      const meshes = context.meshes || [];
       originalSettings = normalizeModelSettings(context.settings, meshes, { category: context.entry.category });
       draft = {
         name: context.entry.name || '',
@@ -655,6 +493,9 @@ export function setupModelEditor({ getContext, onSave, isBusy = () => false }) {
         category: context.entry.category || 'Non-builded',
         settings: copy(originalSettings),
       };
+      if (!draft.settings.highlightColor) {
+        draft.settings.highlightColor = '#7be6cc';
+      }
       selectedGroups = new Set();
       busy(false);
       render();
@@ -662,20 +503,8 @@ export function setupModelEditor({ getContext, onSave, isBusy = () => false }) {
 
       dialog.showModal();
 
-      initPreview();
-
-      // 在 Next Frame / 定时器中强制刷新尺寸与模型渲染
-      requestAnimationFrame(() => {
-        resizePreview();
-        updatePreviewScene();
-      });
-
-      setTimeout(() => {
-        resizePreview();
-      }, 150);
-
       fields.scrollTop = 0;
-      nameInput.focus();
+      if (nameInput) nameInput.focus();
       return true;
     },
     isOpen: () => dialog.open,
