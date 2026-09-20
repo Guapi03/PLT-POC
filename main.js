@@ -22,7 +22,7 @@ const state = {
  modelId: null,
  category: 'Non-builded',
  settings: null,
- themeColor: '#7BE6CC'
+ themeColor: '#7BE6CC' // 当前激活的高亮色彩
 };
 
 const host = $('#canvas-host');
@@ -141,15 +141,15 @@ function fitView(resetAngle = false) {
  controls.update();
 }
 
-// 核心修复：彻底隔离 view 模式与 selected 高亮状态
+// 核心修正：仅针对当前选中的部件（isSelected = true）施加高亮，非选中部件精准恢复默认外观 x
 function applyAppearance(arMode = false) {
  for (const [obj, saved] of originals) {
   const bases = [].concat(saved.material);
   const group = state.settings?.groups.find(g => g.id === saved.part);
-  const isSelected = state.selected === saved.part;
+  const isSelected = !!(state.selected && state.selected === saved.part);
 
   [].concat(obj.material).forEach((m, i) => {
-   // 1. 还原基础外貌（处理不透明度、预设材质形态等）
+   // 1. 还原该视图模式下的默认基础材质形态 (x)
    applyMaterialAppearance(m, bases[i], {
     preset: group?.preset || 'auto',
     glassOpacity: state.settings?.glassOpacity ?? 0.18,
@@ -158,28 +158,22 @@ function applyAppearance(arMode = false) {
     selected: isSelected
    });
 
-   // 2. 状态隔离管理
-   if (state.view === 'original') {
-    // 原始视图：强行还原 GLB 原始色彩，彻底清除高亮发光
+   // 2. 状态精准判定：只有被用户点选的那个部件才会被赋予色彩 y
+   if (isSelected) {
+    if (state.view !== 'original') {
+     if (m.color && state.themeColor) {
+      m.color.set(state.themeColor);
+     }
+    }
+    if (m.emissive) {
+     m.emissive.set(state.themeColor || 0x7be6cc);
+     m.emissiveIntensity = 0.45;
+    }
+   } else {
+    // 没被选中的部件（包括之前被选过但现在切换掉的部件）：彻底恢复原状 x，清除高亮发光
     if (m.emissive) {
      m.emissive.setHex(0x000000);
      m.emissiveIntensity = 0;
-    }
-   } else {
-    // 玻璃 / 结构视图：统一施加全局主题色
-    if (state.themeColor && m.color) {
-     m.color.set(state.themeColor);
-    }
-
-    // 处理选中高亮：使用自发光 (Emissive) 进行层次区分，未选中则清空发光
-    if (m.emissive) {
-     if (isSelected) {
-      m.emissive.set(state.themeColor || 0x7be6cc);
-      m.emissiveIntensity = 0.45;
-     } else {
-      m.emissive.setHex(0x000000);
-      m.emissiveIntensity = 0;
-     }
     }
    }
   });
