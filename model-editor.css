@@ -50,7 +50,7 @@ dialog.model-editor::backdrop {
 /* 主主体布局：电脑端双栏 */
 .editor-main-layout {
  display: grid;
- grid-template-columns: minmax(0, 1fr) 380px;
+ grid-template-columns: minmax(0, 1fr) 420px;
  flex: 1 1 auto;
  min-height: 0;
  overflow: hidden;
@@ -105,23 +105,24 @@ dialog.model-editor::backdrop {
 .editor-group-heading { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 12px; }
 .editor-count { font-size: 11px; color: #8ba8b5; white-space: nowrap; }
 .editor-check { display: flex; align-items: center; gap: 8px; min-height: 26px; font-size: 13px; line-height: 1.5; cursor: pointer; min-width: 0; }
-.editor-group-row { display: grid; grid-template-columns: minmax(0,1.2fr) minmax(160px,1fr); gap: 14px; }
 
-/* 展示材质与自定义颜色选择器样式 */
-.editor-preset-wrapper {
- display: flex;
- flex-direction: column;
- gap: 6px;
+/* 3 列排版：名称 | 材质 | 标识颜色 */
+.editor-group-row {
+ display: grid;
+ grid-template-columns: minmax(0, 1.2fr) minmax(130px, 1fr) minmax(130px, 1fr);
+ gap: 12px;
 }
 
+/* 🎨 探索/结构标识颜色调色组件 */
 .color-picker-container {
  display: flex;
  align-items: center;
  gap: 8px;
  background: #0e1c23;
- padding: 4px 8px;
+ padding: 5px 8px;
  border: 1px solid #3f5b67;
  border-radius: 6px;
+ height: 40px;
 }
 
 .editor-color-input {
@@ -132,12 +133,14 @@ dialog.model-editor::backdrop {
  border: 0 !important;
  background: none !important;
  cursor: pointer;
+ flex-shrink: 0;
 }
 
 .color-val-text {
  font-size: 12px;
  font-family: 'IBM Plex Mono', monospace;
  color: var(--mint, #7be6cc);
+ text-transform: uppercase;
 }
 
 .editor-group-bottom { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; margin-top: 8px; }
@@ -164,8 +167,8 @@ dialog.model-editor::backdrop {
  background: #0e1c23;
  border-left: 1px solid #304850;
  height: 100%;
- min-height: 250px;
  overflow: hidden;
+ position: relative;
 }
 
 .editor-preview-header {
@@ -175,6 +178,7 @@ dialog.model-editor::backdrop {
  padding: 12px 16px;
  background: #142730;
  border-bottom: 1px solid #253a44;
+ z-index: 2;
 }
 
 .editor-preview-title {
@@ -193,15 +197,17 @@ dialog.model-editor::backdrop {
 }
 
 .editor-preview-canvas-host {
- flex: 1;
+ flex: 1 1 auto;
  width: 100%;
  height: 100%;
- min-height: 200px;
+ min-height: 280px;
  position: relative;
  touch-action: none;
 }
 
 .editor-preview-canvas-host canvas {
+ position: absolute;
+ inset: 0;
  display: block;
  width: 100% !important;
  height: 100% !important;
@@ -215,7 +221,7 @@ dialog.model-editor::backdrop {
 .editor-feedback.error { color: #ffc1ad; }
 .editor-actions { display: flex; align-items: center; gap: 9px; flex-shrink: 0; }
 
-/* 📱 手机端专用布局优化 (Max-width: 620px) */
+/* 📱 手机端专用布局 (Max-width: 620px) */
 @media(max-width: 620px) {
  dialog.model-editor {
   width: calc(100% - 16px);
@@ -227,7 +233,7 @@ dialog.model-editor::backdrop {
  .editor-header { padding: 14px 16px; }
  .model-editor .editor-header h2 { font-size: 18px; }
 
- /* 手机端布局改为纵向：Preview 在上方，Form 表单在下方 */
+ /* 手机端：Preview 位于上方，Form 表单在下方 */
  .editor-main-layout {
   display: flex;
   flex-direction: column;
@@ -235,8 +241,8 @@ dialog.model-editor::backdrop {
 
  .editor-preview-panel {
   order: 1;
-  height: 200px;
-  min-height: 200px;
+  height: 220px;
+  min-height: 220px;
   border-left: 0;
   border-bottom: 1px solid #304850;
   flex-shrink: 0;
