@@ -588,26 +588,35 @@ dialog::backdrop {
     backdrop-filter: blur(6px);
 }
 
-.dialog-close {
+/* 统一所有弹窗关闭按钮 (对齐 Model Editor 规范) */
+.dialog-close,
+.editor-close {
     position: absolute;
-    right: 18px;
-    top: 18px;
-    width: 32px;
-    height: 32px;
-    background: transparent;
-    border: 0;
-    border-radius: 6px;
-    font-size: 20px;
-    color: #abc1cc;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: all 0.15s ease;
+    top: 19px;
+    right: 20px;
+    display: grid;
+    place-items: center;
+    width: 38px;
+    height: 38px;
+    min-width: 38px;
+    min-height: 38px;
+    border: 0 !important;
+    outline: none !important;
+    border-radius: 7px;
+    background: transparent !important;
+    color: #b8ccd4;
+    font-size: 25px;
+    line-height: 1;
+    padding: 0;
+    margin: 0;
+    cursor: pointer;
+    transition: background 0.15s ease;
 }
 
-.dialog-close:hover {
-    color: #fff;
-    background: rgba(255, 255, 255, 0.08);
+.dialog-close:hover,
+.editor-close:hover {
+    background: #2b414b !important;
+    color: #ffffff;
 }
 
 dialog.model-editor-style {
@@ -707,6 +716,7 @@ dialog.model-editor-style {
     padding-right: 36px;
 }
 
+/* 搜索框图标与文字内边距样式修整 */
 .search-input-wrapper {
     position: relative;
     display: flex;
@@ -717,11 +727,16 @@ dialog.model-editor-style {
 .search-input-wrapper .search-icon {
     position: absolute;
     left: 12px;
+    font-size: 14px;
     color: #6c8793;
     pointer-events: none;
+    z-index: 2;
 }
 
-.search-input-wrapper input { padding-left: 36px; }
+/* 强制增加左内边距，解决图标与占位文本打架问题 */
+.model-editor-style .search-input-wrapper input {
+    padding-left: 38px !important;
+}
 
 .drop-zone-card {
     display: flex;
@@ -1024,6 +1039,10 @@ body.xr-active .workspace {
         display: flex;
         flex-direction: column;
         align-items: stretch;
+    }
+    .dialog-close, .editor-close {
+        top: 13px;
+        right: 12px;
     }
 }
 
