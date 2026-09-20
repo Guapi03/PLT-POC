@@ -28,13 +28,11 @@ export async function setupLibrary({ activate, getActive, isBusy, onBusyChange }
     let filterKeyword = '';
     let filterCategory = 'ALL';
 
-    // 当前排序状态 (field: 'name' | 'category', direction: 'asc' | 'desc')
     let sortState = {
         field: 'name',
         direction: 'asc'
     };
 
-    // 从 Supabase 获取全部模型
     async function fetchModelsFromSupabase() {
         const { data, error } = await supabase
             .from('models')
@@ -45,11 +43,9 @@ export async function setupLibrary({ activate, getActive, isBusy, onBusyChange }
         return cachedModels;
     }
 
-    // 获取过滤和排序后的模型列表
     function getProcessedModels() {
         const kw = filterKeyword.trim().toLowerCase();
 
-        // 1. 关键词 + 分类过滤
         const filtered = cachedModels.filter(m => {
             const cat = String(m.category || m.profile || 'Non-builded');
             const name = String(m.name || '');
@@ -62,7 +58,6 @@ export async function setupLibrary({ activate, getActive, isBusy, onBusyChange }
             return matchCategory && matchKeyword;
         });
 
-        // 2. 根据 Header 字段排序
         return filtered.sort((a, b) => {
             let valA = '';
             let valB = '';
@@ -81,7 +76,6 @@ export async function setupLibrary({ activate, getActive, isBusy, onBusyChange }
         });
     }
 
-    // 切换表头排序
     function toggleSort(field) {
         if (sortState.field === field) {
             sortState.direction = sortState.direction === 'asc' ? 'desc' : 'asc';
@@ -97,7 +91,6 @@ export async function setupLibrary({ activate, getActive, isBusy, onBusyChange }
         return sortState.direction === 'asc' ? '↓' : '↑';
     }
 
-    // 渲染表头 Header（样式交给 CSS 的 .library-table-header 类控制）
     function renderHeader(container) {
         const header = document.createElement('div');
         header.className = 'library-table-header';
@@ -122,7 +115,6 @@ export async function setupLibrary({ activate, getActive, isBusy, onBusyChange }
         container.appendChild(header);
     }
 
-    // 渲染模型列表（使用外部 CSS 类名控制）
     function renderList() {
         const listEl = $('#library-list');
         if (!listEl) return;
@@ -147,19 +139,15 @@ export async function setupLibrary({ activate, getActive, isBusy, onBusyChange }
             const active = getActive();
             const isActive = active && String(active.id) === String(model.id);
 
-            // 卡片容器：使用 .library-entry 类
             const item = document.createElement('div');
             item.className = `library-entry ${isActive ? 'active' : ''}`;
 
-            // 第一部分：Name + Category 组合容器（适合手机端两行排版的顶部）
             const topGroup = document.createElement('div');
             topGroup.className = 'library-entry-top';
 
-            // 1. Name 显示
             const nameEl = document.createElement('h3');
             nameEl.textContent = model.name;
 
-            // 2. Category 显示
             const catEl = document.createElement('span');
             catEl.className = 'category-badge';
             catEl.textContent = model.category || model.profile || 'Non-builded';
@@ -167,15 +155,12 @@ export async function setupLibrary({ activate, getActive, isBusy, onBusyChange }
             topGroup.appendChild(nameEl);
             topGroup.appendChild(catEl);
 
-            // 3. 操作按钮组：使用 .library-actions 类
             const actionGroup = document.createElement('div');
             actionGroup.className = 'library-actions';
 
-            // 使用 / 当前使用 按钮
+            // 使用 / 当前使用 按钮 (赋予 class)
             const useBtn = document.createElement('button');
-            if (isActive) {
-                useBtn.className = 'primary';
-            }
+            useBtn.className = isActive ? 'primary' : 'use-btn';
             useBtn.textContent = isActive ? '当前使用' : '使用';
             useBtn.disabled = isActive;
 
@@ -186,6 +171,7 @@ export async function setupLibrary({ activate, getActive, isBusy, onBusyChange }
 
             // 编辑按钮
             const editBtn = document.createElement('button');
+            editBtn.className = 'edit-btn';
             editBtn.textContent = '编辑';
 
             editBtn.onclick = async () => {
@@ -233,7 +219,6 @@ export async function setupLibrary({ activate, getActive, isBusy, onBusyChange }
             actionGroup.appendChild(editBtn);
             actionGroup.appendChild(delBtn);
 
-            // 把组组装到 item 中
             item.appendChild(topGroup);
             item.appendChild(actionGroup);
 
@@ -241,7 +226,6 @@ export async function setupLibrary({ activate, getActive, isBusy, onBusyChange }
         });
     }
 
-    // 选择并加载模型，同时更新左上角 GLASS / <Category> 名称
     async function chooseModel(id) {
         onBusyChange(true);
         const msgEl = $('#load-message');
@@ -258,7 +242,6 @@ export async function setupLibrary({ activate, getActive, isBusy, onBusyChange }
 
             await activate(modelEntry, gltf);
 
-            // 动态更新左上角 GLASS / <Category Name>
             const categoryName = modelEntry.category || modelEntry.profile || 'LAB';
             const brandCategoryEl = $('#brand-category');
             if (brandCategoryEl) {
@@ -275,7 +258,6 @@ export async function setupLibrary({ activate, getActive, isBusy, onBusyChange }
         }
     }
 
-    // 绑定搜索框
     const searchInput = $('#library-search-input');
     if (searchInput) {
         searchInput.value = '';
@@ -285,7 +267,6 @@ export async function setupLibrary({ activate, getActive, isBusy, onBusyChange }
         });
     }
 
-    // 绑定类型全部分类下拉框
     const categorySelect = $('#library-category-select');
     if (categorySelect) {
         await populateCategoryOptions(categorySelect, 'ALL');
@@ -302,7 +283,6 @@ export async function setupLibrary({ activate, getActive, isBusy, onBusyChange }
         });
     }
 
-    // 初始化获取数据并渲染
     await fetchModelsFromSupabase();
     renderList();
 
