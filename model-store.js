@@ -13,6 +13,18 @@ function base64ToBuffer(base64) {
     return bytes.buffer;
 }
 
+function bufferToBase64(buffer) {
+    let binary = '';
+    const bytes = new Uint8Array(buffer);
+    const len = bytes.byteLength;
+    const chunkSize = 0x8000; // 32K 分块处理，防止大文件引发栈溢出
+    for (let i = 0; i < len; i += chunkSize) {
+        const chunk = bytes.subarray(i, Math.min(i + chunkSize, len));
+        binary += String.fromCharCode.apply(null, chunk);
+    }
+    return window.btoa(binary);
+}
+
 export function saveDownload(blob, filename) {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -158,7 +170,7 @@ export async function setupLibrary({ activate, getActive, isBusy, onBusyChange }
             const actionGroup = document.createElement('div');
             actionGroup.className = 'library-actions';
 
-            // 使用 / 当前使用 按钮 (赋予 class)
+            // 使用 / 当前使用 按钮
             const useBtn = document.createElement('button');
             useBtn.className = isActive ? 'primary' : 'use-btn';
             useBtn.textContent = isActive ? '当前使用' : '使用';
@@ -258,6 +270,16 @@ export async function setupLibrary({ activate, getActive, isBusy, onBusyChange }
         }
     }
 
+    async function saveBytes(id, arrayBuffer) {
+        const base64Data = bufferToBase64(arrayBuffer);
+        const { error } = await supabase
+            .from('models')
+            .update({ file_data: base64Data })
+            .eq('id', id);
+        if (error) throw new Error('保存二进制模型数据失败: ' + error.message);
+        await fetchModelsFromSupabase();
+    }
+
     const searchInput = $('#library-search-input');
     if (searchInput) {
         searchInput.value = '';
@@ -303,6 +325,7 @@ export async function setupLibrary({ activate, getActive, isBusy, onBusyChange }
             renderList();
         },
         getBytes: async (entry) => base64ToBuffer(entry.file_data),
+        saveBytes,
         updateEntry: async (id, patch) => {
             const { data, error } = await supabase
                 .from('models')

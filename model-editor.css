@@ -35,8 +35,16 @@ dialog.model-editor::backdrop {
 }
 .editor-header .eyebrow { font-size: 10px; margin: 0 0 6px; letter-spacing: 2px; }
 .model-editor .editor-header h2 { font-size: 25px; margin: 0 42px 8px 0; font-weight: 500; }
-.editor-intro, .editor-help { color: #9fb7c1; font-size: 13px; line-height: 1.75; margin: 0; }
-.editor-intro { padding-right: 20px; max-width: 650px; }
+.editor-intro { color: #9fb7c1; font-size: 13px; line-height: 1.75; margin: 0; padding-right: 20px; max-width: 650px; }
+
+/* 修复说明文字间距，防止与下方输入框重叠 */
+.editor-help {
+ color: #9fb7c1;
+ font-size: 13px;
+ line-height: 1.6;
+ margin: 0 0 16px 0 !important;
+}
+
 .editor-close {
  position: absolute; top: 19px; right: 20px;
  display: grid; place-items: center;
@@ -66,6 +74,7 @@ dialog.model-editor::backdrop {
 .model-editor h3 { font-size: 16px; margin: 0 0 15px; font-weight: 600; }
 .editor-section-heading { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 12px; flex-wrap: wrap; }
 .editor-section-heading h3 { margin: 0; }
+
 .editor-field { display: flex; flex-direction: column; gap: 7px; min-width: 0; margin: 0 0 14px; }
 .editor-field-title { font-size: 12px; color: #a9c1ca; line-height: 1.5; }
 
@@ -94,8 +103,32 @@ dialog.model-editor::backdrop {
 .editor-check { display: flex; align-items: center; gap: 9px; min-height: 28px; font-size: 13px; line-height: 1.5; cursor: pointer; min-width: 0; }
 .editor-check span { overflow-wrap: anywhere; min-width: 0; }
 
-/* 重点优化：平行两项表单行（部件名称与展示材质、模型名称与分类） */
-.editor-group-row { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(160px, 1fr); gap: 16px; }
+/* --------------------------------------------------------------------------
+   关键修复：强制清除行内相邻选择器导致的 margin-top 错位，确保百分百平行对齐
+   -------------------------------------------------------------------------- */
+.editor-group-row > .editor-field,
+.editor-assembly-row > .editor-field,
+.editor-group-row > .editor-field + .editor-field,
+.editor-assembly-row > .editor-field + .editor-field {
+ margin-top: 0 !important;
+ margin-bottom: 0 !important;
+}
+
+.editor-group-row {
+ display: grid !important;
+ grid-template-columns: minmax(0, 1.4fr) minmax(160px, 1fr) !important;
+ gap: 16px !important;
+ align-items: start !important;
+ margin-bottom: 14px !important;
+}
+
+.editor-assembly-row {
+ display: grid !important;
+ grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+ gap: 14px !important;
+ align-items: start !important;
+ margin-bottom: 16px !important;
+}
 
 .editor-group-bottom { display: flex; justify-content: space-between; align-items: flex-start; gap: 20px; }
 .editor-members { min-width: 0; font-size: 11px; color: #91acb7; line-height: 1.7; }
@@ -108,21 +141,16 @@ dialog.model-editor::backdrop {
 .editor-value { font-variant-numeric: tabular-nums; font-family: 'IBM Plex Mono',monospace; color: var(--mint,#7be6cc); }
 .editor-enable { color: var(--mint,#7be6cc); }
 
-.editor-assembly-fields { padding: 18px 0 0; margin: 0; border: 0; min-width: 0; transition: opacity .15s; }
+.editor-assembly-fields { padding: 0 !important; margin: 0 !important; border: 0 !important; min-width: 0; transition: opacity .15s; }
 .editor-assembly-fields:disabled { opacity: .38; }
 .editor-assembly-fields:disabled input, .editor-assembly-fields:disabled label { cursor: default; }
 
-/* 重点优化：装配三列平行行（移动轴、移动方向、最大移动距离） */
-.editor-assembly-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; margin-bottom: 14px; }
-
-/* 重点优化：装配分组选择两栏平行排布 */
 .editor-assembly-groups { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
 
 .editor-choice-section { border: 1px solid #304b57; min-width: 0; border-radius: 8px; padding: 9px 14px 13px; margin: 2px 0 0; background: #172a32; }
 .editor-choice-section legend { font-size: 12px; color: #a9c1ca; padding: 0 5px; }
 .editor-choice-section .editor-check { padding: 6px 0; }
 
-/* 更换模型文件部件样式 */
 .editor-file-picker { display: flex; align-items: center; gap: 12px; background: #0e1c23; border: 1px solid #3f5b67; padding: 6px 12px; border-radius: 6px; }
 .editor-file-status { font-size: 12px; color: #8ba8b5; word-break: break-all; }
 

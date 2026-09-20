@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import { setupAR } from './ar.js';
-import { setupLibrary, saveDownload } from './model-store.js';
+import { setupLibrary, saveDownload, saveGlbToIndexedDB } from './model-store.js';
 import { setupUploader } from './model-uploader.js';
 import { disposeModel } from './model-io.js';
 import { normalizeModelSettings } from './model-settings.js';
@@ -22,7 +22,7 @@ const state = {
  modelId: null,
  category: 'Non-builded',
  settings: null,
- themeColor: '#7BE6CC' // 当前激活的高亮色彩
+ themeColor: '#7BE6CC'
 };
 
 const host = $('#canvas-host');
@@ -141,7 +141,6 @@ function fitView(resetAngle = false) {
  controls.update();
 }
 
-// 核心修正：仅针对当前选中的部件（isSelected = true）施加高亮，非选中部件精准恢复默认外观 x
 function applyAppearance(arMode = false) {
  for (const [obj, saved] of originals) {
   const bases = [].concat(saved.material);
@@ -149,7 +148,6 @@ function applyAppearance(arMode = false) {
   const isSelected = !!(state.selected && state.selected === saved.part);
 
   [].concat(obj.material).forEach((m, i) => {
-   // 1. 还原该视图模式下的默认基础材质形态 (x)
    applyMaterialAppearance(m, bases[i], {
     preset: group?.preset || 'auto',
     glassOpacity: state.settings?.glassOpacity ?? 0.18,
@@ -158,7 +156,6 @@ function applyAppearance(arMode = false) {
     selected: isSelected
    });
 
-   // 2. 状态精准判定：只有被用户点选的那个部件才会被赋予色彩 y
    if (isSelected) {
     if (state.view !== 'original') {
      if (m.color && state.themeColor) {
@@ -170,7 +167,6 @@ function applyAppearance(arMode = false) {
      m.emissiveIntensity = 0.45;
     }
    } else {
-    // 没被选中的部件（包括之前被选过但现在切换掉的部件）：彻底恢复原状 x，清除高亮发光
     if (m.emissive) {
      m.emissive.setHex(0x000000);
      m.emissiveIntensity = 0;
@@ -502,9 +498,14 @@ editor = setupModelEditor({
  onSave: async patch => {
   const settings = normalizeModelSettings(patch.settings, meshDescriptors, { category: state.category });
 
+  // 防御性保存二进制数据
   if (patch.newGlbFile) {
    const buffer = await patch.newGlbFile.arrayBuffer();
-   await library.saveBytes(active.id, buffer);
+   if (typeof library.saveBytes === 'function') {
+    await library.saveBytes(active.id, buffer);
+   } else {
+    await saveGlbToIndexedDB(active.id, buffer);
+   }
   }
 
   active = await library.updateEntry(active.id, {
