@@ -1,14 +1,17 @@
 import { normalizeModelSettings, mergeGroups, splitGroup } from './model-settings.js';
 
-// 纯粹的展示材质选项
 const PRESETS = [
-  ['auto', '自动识别'],
-  ['original', '原始材质'],
-  ['glass', '透明玻璃'],
-  ['frosted', '磨砂玻璃'],
-  ['solid', '不透明材质'],
+  ['auto', '自动识别'], ['original', '原始材质'], ['glass', '透明玻璃'],
+  ['frosted', '磨砂玻璃'], ['solid', '不透明材质'],
 ];
 
+// 部件高亮颜色的默认调色盘
+const DEFAULT_COLORS = [
+  '#7be6cc', '#4ea8de', '#f72585', '#4895ef', '#560bad',
+  '#3a0ca3', '#b5179e', '#7209b7', '#4cc9f0'
+];
+
+// 默认基础分类选项（若未连接/加载 Supabase 时的降级备用）
 let categoryOptions = [
   ['Adapters', 'Adapters'],
   ['Bottles', 'Bottles'],
@@ -23,20 +26,17 @@ function el(tag, className, text) {
   if (text !== undefined) node.textContent = text;
   return node;
 }
-
 function button(text, className, action) {
   const node = el('button', className, text);
   node.type = 'button';
   if (action) node.addEventListener('click', action);
   return node;
 }
-
 function labeled(title, input, className = 'editor-field') {
   const label = el('label', className);
   label.append(el('span', 'editor-field-title', title), input);
   return label;
 }
-
 function optionSelect(options, value) {
   const select = el('select');
   for (const [key, label] of options) {
@@ -48,6 +48,9 @@ function optionSelect(options, value) {
   return select;
 }
 
+/**
+ * 填充下拉选择框（优先从 Supabase RPC 读取全量分类）
+ */
 export async function populateCategoryOptions(selectElement, selectedValue = 'Non-builded', supabaseClient = window.supabase) {
   if (!selectElement) return;
 
@@ -79,19 +82,17 @@ export function setupModelEditor({ getContext, onSave, isBusy = () => false }) {
     link.href = cssURL;
     document.head.append(link);
   }
-
   const dialog = el('dialog', 'model-editor');
   dialog.id = 'model-editor-dialog';
   dialog.setAttribute('aria-labelledby', 'model-editor-title');
   const form = el('form', 'model-editor-form');
   form.noValidate = true;
-
   const header = el('header', 'editor-header');
   const heading = el('div');
   heading.append(el('p', 'eyebrow', 'MODEL SETTINGS'));
   const title = el('h2', '', '编辑模型');
   title.id = 'model-editor-title';
-  heading.append(title, el('p', 'editor-intro', '设置展示材质、探索分组与全局高亮颜色。'));
+  heading.append(title, el('p', 'editor-intro', '设置展示材质、结构模式高亮颜色与装配动作。保存后会随网站包一起导出。'));
   const close = button('×', 'editor-close', () => cancel());
   close.id = 'model-editor-close';
   close.setAttribute('aria-label', '取消并关闭编辑');
@@ -130,7 +131,6 @@ export function setupModelEditor({ getContext, onSave, isBusy = () => false }) {
     feedback.textContent = message;
     feedback.classList.toggle('error', error);
   }
-
   function busy(value) {
     working = value;
     fields.disabled = value;
@@ -138,14 +138,18 @@ export function setupModelEditor({ getContext, onSave, isBusy = () => false }) {
     dialog.setAttribute('aria-busy', String(value));
     saveButton.textContent = value ? '请稍候…' : '保存设置';
   }
-
   function normalized() {
-    const norm = normalizeModelSettings(copy(draft.settings), context.meshes || [], { category: draft.category });
-    // 保存全局部件高亮/选中颜色
-    norm.highlightColor = draft.settings.highlightColor || '#7be6cc';
+    const norm = normalizeModelSettings(copy(draft.settings), context.meshes, { category: draft.category });
+    // 确保保留每个探索分组设置的结构高亮颜色
+    norm.groups.forEach((g, idx) => {
+      const draftGroup = draft.settings.groups[idx];
+      if (draftGroup) {
+        if (draftGroup.color) g.color = draftGroup.color;
+        if (draftGroup.structureColor) g.structureColor = draftGroup.structureColor;
+      }
+    });
     return norm;
   }
-
   function validate() {
     if (!draft.name.trim()) {
       nameInput.focus();
@@ -168,37 +172,28 @@ export function setupModelEditor({ getContext, onSave, isBusy = () => false }) {
       throw new Error('装配最大移动距离须介于 1 至 1000 mm。');
     }
   }
-
   function updateMergeButton() {
     mergeButton.textContent = selectedGroups.size ? `合并所选（${selectedGroups.size}）` : '合并所选';
     mergeButton.disabled = selectedGroups.size < 2;
   }
-
   function updateAssemblyNames(group) {
     const name = group.name.trim() || '未命名分组';
     if (moveLabels.has(group.id)) moveLabels.get(group.id).textContent = name;
     if (hideLabels.has(group.id)) hideLabels.get(group.id).textContent = name;
   }
-
   function changeGroups(change) {
     const { enabled, axis, direction, distanceMm } = draft.settings.assembly;
     const glassOpacity = draft.settings.glassOpacity;
-    const highlightColor = draft.settings.highlightColor;
     draft.settings = change(draft.settings);
     Object.assign(draft.settings.assembly, { enabled, axis, direction, distanceMm });
     draft.settings.glassOpacity = glassOpacity;
-    draft.settings.highlightColor = highlightColor;
   }
-
   function renderGroups() {
-    const meshes = context.meshes || [];
-    const meshNames = new Map(meshes.map(mesh => [mesh.id || mesh.name, mesh.name || mesh.id]));
+    const meshNames = new Map(context.meshes.map(mesh => [mesh.id, mesh.name]));
     groupList.replaceChildren();
-
     draft.settings.groups.forEach((group, index) => {
       const card = el('section', 'editor-group');
       card.dataset.groupId = group.id;
-
       const top = el('div', 'editor-group-heading');
       const select = el('input');
       select.type = 'checkbox';
@@ -214,9 +209,8 @@ export function setupModelEditor({ getContext, onSave, isBusy = () => false }) {
       top.append(choice, el('span', 'editor-count', `${group.meshIds.length} 个网格`));
       card.append(top);
 
-      // 第一排：部件名称 | 展示材质
+      // 第一排：部件名称 | 展示材质 | 结构选中颜色
       const row = el('div', 'editor-group-row');
-
       const name = el('input');
       name.type = 'text';
       name.maxLength = 80;
@@ -224,13 +218,35 @@ export function setupModelEditor({ getContext, onSave, isBusy = () => false }) {
       name.dataset.groupName = group.id;
       name.addEventListener('input', () => { group.name = name.value; updateAssemblyNames(group); });
 
-      const presetSelect = optionSelect(PRESETS, group.preset || 'auto');
-      presetSelect.dataset.groupPreset = group.id;
-      presetSelect.addEventListener('change', () => { group.preset = presetSelect.value; });
+      const preset = optionSelect(PRESETS, group.preset);
+      preset.dataset.groupPreset = group.id;
+      preset.addEventListener('change', () => { group.preset = preset.value; });
+
+      // 🎨 结构模式/部件列表点击高亮颜色调色器
+      const currentColor = group.color || group.structureColor || DEFAULT_COLORS[index % DEFAULT_COLORS.length];
+      group.color = currentColor;
+      group.structureColor = currentColor;
+
+      const colorPickerContainer = el('div', 'color-picker-container');
+      const colorInput = el('input', 'editor-color-input');
+      colorInput.type = 'color';
+      colorInput.value = currentColor;
+
+      const colorText = el('span', 'color-val-text', currentColor);
+
+      colorInput.addEventListener('input', (e) => {
+        const val = e.target.value;
+        group.color = val;
+        group.structureColor = val;
+        colorText.textContent = val;
+      });
+
+      colorPickerContainer.append(colorInput, colorText);
 
       row.append(
           labeled('部件名称', name),
-          labeled('展示材质', presetSelect)
+          labeled('展示材质', preset),
+          labeled('结构选中颜色', colorPickerContainer)
       );
       card.append(row);
 
@@ -253,7 +269,7 @@ export function setupModelEditor({ getContext, onSave, isBusy = () => false }) {
 
       if (group.meshIds.length > 1) {
         const split = button('拆分分组', 'editor-text-button', () => {
-          changeGroups(settings => splitGroup(settings, group.id, context.meshes || []));
+          changeGroups(settings => splitGroup(settings, group.id, context.meshes));
           selectedGroups.delete(group.id);
           renderGroups();
           renderAssembly();
@@ -267,7 +283,6 @@ export function setupModelEditor({ getContext, onSave, isBusy = () => false }) {
     });
     updateMergeButton();
   }
-
   function renderAssembly() {
     assemblyList.replaceChildren();
     moveLabels = new Map();
@@ -300,11 +315,8 @@ export function setupModelEditor({ getContext, onSave, isBusy = () => false }) {
         makeChoices('可用开关隐藏的分组（可选）', 'hiddenGroupIds', hideLabels),
     );
   }
-
   function render() {
     body.replaceChildren();
-
-    // 1. 模型信息
     const identity = el('section', 'editor-section editor-identity');
     identity.append(el('h3', '', '模型信息'));
     nameInput = el('input');
@@ -322,6 +334,7 @@ export function setupModelEditor({ getContext, onSave, isBusy = () => false }) {
     description.placeholder = '显示在模型标题下方';
     description.addEventListener('input', () => { draft.description = description.value; });
 
+    // 模型类型/分类 Select Box 下拉框
     const categorySelect = optionSelect(categoryOptions, draft.category || 'Non-builded');
     categorySelect.id = 'editor-model-category';
     populateCategoryOptions(categorySelect, draft.category || 'Non-builded');
@@ -334,7 +347,6 @@ export function setupModelEditor({ getContext, onSave, isBusy = () => false }) {
     );
     body.append(identity);
 
-    // 2. 探索分组与全局高亮颜色设置
     const groups = el('section', 'editor-section');
     const groupHeading = el('div', 'editor-section-heading');
     groupHeading.append(el('h3', '', '探索分组'));
@@ -344,41 +356,14 @@ export function setupModelEditor({ getContext, onSave, isBusy = () => false }) {
       selectedGroups.clear();
       renderGroups();
       renderAssembly();
-      status('已合并为一个探索分组，点击时会一起高亮。');
+      status('已合并为一个探索分组，点击时会一起高亮。可继续修改名称、材质和高亮颜色。');
     });
     mergeButton.id = 'editor-merge-groups';
     groupHeading.append(mergeButton);
-    groups.append(groupHeading, el('p', 'editor-help', '组织模型部件分组。'));
+    groups.append(groupHeading, el('p', 'editor-help', '选中多个分组后合并，在此可配置结构模式下的部件高亮选中颜色。'));
     groupList = el('div', 'editor-group-list');
     groupList.id = 'editor-group-list';
     groups.append(groupList);
-
-    // 全局控制：结构高亮 / 部件选中颜色
-    const globalControls = el('div', 'editor-global-controls');
-
-    // 🎨 通用部件高亮颜色选择器
-    const highlightColorContainer = el('div', 'color-picker-container');
-    const currentHighlightColor = draft.settings.highlightColor || '#7be6cc';
-    draft.settings.highlightColor = currentHighlightColor;
-
-    const highlightColorInput = el('input', 'editor-color-input');
-    highlightColorInput.type = 'color';
-    highlightColorInput.id = 'editor-highlight-color';
-    highlightColorInput.value = currentHighlightColor;
-
-    const highlightValText = el('span', 'color-val-text', currentHighlightColor);
-
-    highlightColorInput.addEventListener('input', (e) => {
-      draft.settings.highlightColor = e.target.value;
-      highlightValText.textContent = e.target.value;
-    });
-
-    highlightColorContainer.append(highlightColorInput, highlightValText);
-
-    const highlightField = labeled('部件选中 / 结构高亮颜色', highlightColorContainer);
-    highlightField.append(el('p', 'editor-help', '控制在页面右侧部件列表中选中部件时，模型上显示的统一高亮颜色。'));
-
-    // 玻璃不透明度滑块
     const glass = el('div', 'editor-glass');
     const range = el('input');
     range.id = 'editor-glass-opacity';
@@ -386,7 +371,7 @@ export function setupModelEditor({ getContext, onSave, isBusy = () => false }) {
     range.min = '0.04';
     range.max = '0.85';
     range.step = '0.01';
-    range.value = draft.settings.glassOpacity || 0.15;
+    range.value = draft.settings.glassOpacity;
     const output = el('output', 'editor-value', Number(range.value).toFixed(2));
     output.htmlFor = range.id;
     const rangeTitle = el('div', 'editor-range-title');
@@ -397,13 +382,10 @@ export function setupModelEditor({ getContext, onSave, isBusy = () => false }) {
       draft.settings.glassOpacity = Number(range.value);
       output.textContent = Number(range.value).toFixed(2);
     });
-    glass.append(rangeTitle, range, el('p', 'editor-help', '用于控制透明/磨砂玻璃材质的基础不透明度。'));
-
-    globalControls.append(highlightField, glass);
-    groups.append(globalControls);
+    glass.append(rangeTitle, range, el('p', 'editor-help', '数值越小越透明。用于透明／磨砂玻璃及自动识别出的玻璃，原始材质不受影响。'));
+    groups.append(glass);
     body.append(groups);
 
-    // 3. 观察装配
     const assembly = el('section', 'editor-section');
     const assemblyHeading = el('div', 'editor-section-heading');
     assemblyHeading.append(el('h3', '', '观察装配'));
@@ -415,7 +397,7 @@ export function setupModelEditor({ getContext, onSave, isBusy = () => false }) {
     const toggle = el('label', 'editor-check editor-enable');
     toggle.append(enabled, el('span', '', '在页面显示此功能'));
     assemblyHeading.append(toggle);
-    assembly.append(assemblyHeading, el('p', 'editor-help', '让选定分组沿一个方向一起移开。'));
+    assembly.append(assemblyHeading, el('p', 'editor-help', '让选定分组沿一个方向一起移开。关闭后，访客页面会隐藏装配控制。'));
     assemblyFields = el('fieldset', 'editor-assembly-fields');
     assemblyFields.disabled = !enabled.checked;
     enabled.addEventListener('change', () => {
@@ -443,7 +425,6 @@ export function setupModelEditor({ getContext, onSave, isBusy = () => false }) {
     assemblyFields.append(assemblyRow, assemblyList);
     assembly.append(assemblyFields);
     body.append(assembly);
-
     renderGroups();
     renderAssembly();
   }
@@ -468,43 +449,32 @@ export function setupModelEditor({ getContext, onSave, isBusy = () => false }) {
         category: draft.category || 'Non-builded',
         settings
       });
-      cancel();
+      dialog.close();
     } catch (error) {
       status(error?.message || '保存失败，修改仍保留在此窗口，请重试。', true);
     } finally { busy(false); }
   });
-
   dialog.addEventListener('cancel', event => { event.preventDefault(); cancel(); });
 
   return {
     open() {
       if (dialog.open || isBusy()) return false;
       context = getContext();
-      if (!context?.entry) {
-        console.warn('模型编辑打开失败: context 或 entry 不存在', context);
-        return false;
-      }
-
-      const meshes = context.meshes || [];
-      originalSettings = normalizeModelSettings(context.settings, meshes, { category: context.entry.category });
+      if (!context?.entry || !Array.isArray(context.meshes) || !context.meshes.length) return false;
+      originalSettings = normalizeModelSettings(context.settings, context.meshes, { category: context.entry.category });
       draft = {
         name: context.entry.name || '',
         description: context.entry.description || '',
         category: context.entry.category || 'Non-builded',
         settings: copy(originalSettings),
       };
-      if (!draft.settings.highlightColor) {
-        draft.settings.highlightColor = '#7be6cc';
-      }
       selectedGroups = new Set();
       busy(false);
       render();
-      status('修改只在保存后生效。');
-
+      status('修改只在保存后生效。合并分组可以随时拆分。');
       dialog.showModal();
-
       fields.scrollTop = 0;
-      if (nameInput) nameInput.focus();
+      nameInput.focus();
       return true;
     },
     isOpen: () => dialog.open,
