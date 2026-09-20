@@ -8,7 +8,7 @@ const PRESETS = [
   ['glass', '透明玻璃'],
   ['frosted', '磨砂玻璃'],
   ['solid', '不透明材质'],
-  ['custom', '🎨 自定义颜色'], // 新增自定义颜色
+  ['custom', '🎨 自定义颜色'],
 ];
 
 let categoryOptions = [
@@ -90,13 +90,12 @@ export function setupModelEditor({ getContext, onSave, isBusy = () => false }) {
   heading.append(el('p', 'eyebrow', 'MODEL SETTINGS'));
   const title = el('h2', '', '编辑模型');
   title.id = 'model-editor-title';
-  heading.append(title, el('p', 'editor-intro', '设置展示材质、探索分组与装配动作。保存后会同步更新。'));
+  heading.append(title, el('p', 'editor-intro', '设置展示材质、探索分组与装配动作。保存后同步更新。'));
   const close = button('×', 'editor-close', () => cancel());
   close.id = 'model-editor-close';
   close.setAttribute('aria-label', '取消并关闭编辑');
   header.append(heading, close);
 
-  // 主主体布局容器（用于分栏：电脑端左表单右Preview，手机端上Preview下表单）
   const mainLayout = el('div', 'editor-main-layout');
 
   const fields = el('fieldset', 'editor-fields');
@@ -106,8 +105,8 @@ export function setupModelEditor({ getContext, onSave, isBusy = () => false }) {
   // 3D 实时结构预览面板
   const previewPanel = el('div', 'editor-preview-panel');
   const previewHeader = el('div', 'editor-preview-header');
-  previewHeader.append(el('span', 'editor-preview-title', '实时结构预览 (Solid)'));
-  previewHeader.append(el('span', 'editor-preview-badge', '交互亮显中'));
+  previewHeader.append(el('span', 'editor-preview-title', '实时结构预览 (Solid Mode)'));
+  previewHeader.append(el('span', 'editor-preview-badge', '3D 视图'));
 
   const previewCanvasHost = el('div', 'editor-preview-canvas-host');
   previewCanvasHost.id = 'editor-preview-canvas-host';
@@ -140,58 +139,58 @@ export function setupModelEditor({ getContext, onSave, isBusy = () => false }) {
   let moveLabels = new Map();
   let hideLabels = new Map();
 
-  // 3D 预览视口变量
+  // 3D 预览视口相关变量
   let pRenderer, pScene, pCamera, pControls, pMeshMap = new Map(), hoveredGroupId = null, animId = null;
 
   function initPreview() {
-    if (pRenderer) return;
+    if (!previewCanvasHost) return;
 
-    pScene = new THREE.Scene();
-    pScene.background = new THREE.Color('#0e1c23');
+    if (!pRenderer) {
+      pScene = new THREE.Scene();
+      pScene.background = new THREE.Color('#0e1c23');
 
-    const ambient = new THREE.AmbientLight(0xffffff, 0.9);
-    const dirLight1 = new THREE.DirectionalLight(0xffffff, 0.8);
-    dirLight1.position.set(5, 10, 7);
-    const dirLight2 = new THREE.DirectionalLight(0xffffff, 0.4);
-    dirLight2.position.set(-5, -5, -5);
-    pScene.add(ambient, dirLight1, dirLight2);
+      const ambient = new THREE.AmbientLight(0xffffff, 0.9);
+      const dirLight1 = new THREE.DirectionalLight(0xffffff, 0.8);
+      dirLight1.position.set(5, 10, 7);
+      const dirLight2 = new THREE.DirectionalLight(0xffffff, 0.4);
+      dirLight2.position.set(-5, -5, -5);
+      pScene.add(ambient, dirLight1, dirLight2);
 
-    pCamera = new THREE.PerspectiveCamera(40, 1, 0.01, 100);
+      pCamera = new THREE.PerspectiveCamera(40, 1, 0.01, 100);
 
-    pRenderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-    pRenderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+      pRenderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+      pRenderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 
-    previewCanvasHost.replaceChildren(pRenderer.domElement);
+      previewCanvasHost.replaceChildren(pRenderer.domElement);
 
-    pControls = new OrbitControls(pCamera, pRenderer.domElement);
-    pControls.enableDamping = true;
-    pControls.dampingFactor = 0.05;
+      pControls = new OrbitControls(pCamera, pRenderer.domElement);
+      pControls.enableDamping = true;
+      pControls.dampingFactor = 0.05;
 
-    const resizeObserver = new ResizeObserver(() => updatePreviewAspect());
-    resizeObserver.observe(previewCanvasHost);
+      const resizeObserver = new ResizeObserver(() => updatePreviewAspect());
+      resizeObserver.observe(previewCanvasHost);
 
-    function animate() {
-      animId = requestAnimationFrame(animate);
-      if (pControls) pControls.update();
-      if (pRenderer && pScene && pCamera) pRenderer.render(pScene, pCamera);
+      function animate() {
+        animId = requestAnimationFrame(animate);
+        if (pControls) pControls.update();
+        if (pRenderer && pScene && pCamera) pRenderer.render(pScene, pCamera);
+      }
+      animate();
     }
-    animate();
   }
 
   function updatePreviewAspect() {
     if (!previewCanvasHost || !pRenderer || !pCamera) return;
     const width = previewCanvasHost.clientWidth || 300;
-    const height = previewCanvasHost.clientHeight || 300;
+    const height = previewCanvasHost.clientHeight || 250;
     pCamera.aspect = width / height;
     pCamera.updateProjectionMatrix();
     pRenderer.setSize(width, height, false);
   }
 
-  // 重新构建预览 Scene (结构模式 + 高亮选中的 group)
   function updatePreviewScene() {
     if (!pScene || !context || !context.meshes) return;
 
-    // 清除原有网格
     pMeshMap.forEach(mesh => pScene.remove(mesh));
     pMeshMap.clear();
 
@@ -202,22 +201,22 @@ export function setupModelEditor({ getContext, onSave, isBusy = () => false }) {
 
     const box = new THREE.Box3();
 
-    // 建立 meshId 到 group 的映射
     const meshToGroup = new Map();
     draft.settings.groups.forEach((g, idx) => {
-      g.meshIds.forEach(id => meshToGroup.set(id, { group: g, index: idx }));
+      g.meshIds.forEach(id => meshToGroup.set(String(id), { group: g, index: idx }));
     });
 
-    context.meshes.forEach(origMesh => {
-      if (!origMesh.geometry) return;
-      const cloneGeom = origMesh.geometry.clone();
+    context.meshes.forEach(item => {
+      const targetMesh = item.isMesh ? item : (item.mesh || item.node || item);
+      const meshId = String(item.id || targetMesh.id || targetMesh.name || targetMesh.uuid);
 
-      const groupInfo = meshToGroup.get(origMesh.id);
+      if (!targetMesh || !targetMesh.geometry) return;
+
+      const groupInfo = meshToGroup.get(meshId) || meshToGroup.get(String(targetMesh.name)) || meshToGroup.get(String(targetMesh.id));
       const isHovered = groupInfo && hoveredGroupId === groupInfo.group.id;
 
       let colorHex = groupPalette[(groupInfo ? groupInfo.index : 0) % groupPalette.length];
 
-      // 自定义颜色设定
       if (groupInfo && groupInfo.group.preset === 'custom' && groupInfo.group.customColor) {
         colorHex = groupInfo.group.customColor;
       }
@@ -225,33 +224,33 @@ export function setupModelEditor({ getContext, onSave, isBusy = () => false }) {
       const mat = new THREE.MeshPhongMaterial({
         color: isHovered ? '#7be6cc' : colorHex,
         emissive: isHovered ? '#1a5c4e' : '#000000',
-        shininess: isHovered ? 80 : 30,
-        wireframe: false,
+        shininess: isHovered ? 90 : 30,
         side: THREE.DoubleSide
       });
 
-      const previewMesh = new THREE.Mesh(cloneGeom, mat);
-      previewMesh.matrix.copy(origMesh.matrix || new THREE.Matrix4());
+      const previewMesh = new THREE.Mesh(targetMesh.geometry, mat);
+
+      targetMesh.updateMatrixWorld(true);
+      previewMesh.matrix.copy(targetMesh.matrixWorld || targetMesh.matrix);
       previewMesh.matrix.decompose(previewMesh.position, previewMesh.quaternion, previewMesh.scale);
 
       pScene.add(previewMesh);
-      pMeshMap.set(origMesh.id, previewMesh);
+      pMeshMap.set(meshId, previewMesh);
 
       box.expandByObject(previewMesh);
     });
 
-    // 居中相机视角
     if (!box.isEmpty()) {
       const center = new THREE.Vector3();
       box.getCenter(center);
       const size = new THREE.Vector3();
       box.getSize(size);
-      const maxDim = Math.max(size.x, size.y, size.z);
+      const maxDim = Math.max(size.x, size.y, size.z, 0.1);
 
       pControls.target.copy(center);
       const fov = pCamera.fov * (Math.PI / 180);
-      let cameraZ = Math.abs(maxDim / 2 / Math.tan(fov / 2)) * 1.8;
-      pCamera.position.set(center.x + cameraZ * 0.6, center.y + cameraZ * 0.4, center.z + cameraZ);
+      let cameraZ = Math.abs(maxDim / 2 / Math.tan(fov / 2)) * 2.0;
+      pCamera.position.set(center.x + cameraZ * 0.5, center.y + cameraZ * 0.4, center.z + cameraZ);
       pCamera.lookAt(center);
       pControls.update();
     }
@@ -268,9 +267,19 @@ export function setupModelEditor({ getContext, onSave, isBusy = () => false }) {
     dialog.setAttribute('aria-busy', String(value));
     saveButton.textContent = value ? '请稍候…' : '保存设置';
   }
+
   function normalized() {
-    return normalizeModelSettings(copy(draft.settings), context.meshes, { category: draft.category });
+    const norm = normalizeModelSettings(copy(draft.settings), context.meshes, { category: draft.category });
+    norm.groups.forEach((g, idx) => {
+      const draftGroup = draft.settings.groups[idx];
+      if (draftGroup) {
+        if (draftGroup.preset === 'custom') g.preset = 'custom';
+        if (draftGroup.customColor) g.customColor = draftGroup.customColor;
+      }
+    });
+    return norm;
   }
+
   function validate() {
     if (!draft.name.trim()) {
       nameInput.focus();
@@ -293,6 +302,7 @@ export function setupModelEditor({ getContext, onSave, isBusy = () => false }) {
       throw new Error('装配最大移动距离须介于 1 至 1000 mm。');
     }
   }
+
   function updateMergeButton() {
     mergeButton.textContent = selectedGroups.size ? `合并所选（${selectedGroups.size}）` : '合并所选';
     mergeButton.disabled = selectedGroups.size < 2;
@@ -317,7 +327,6 @@ export function setupModelEditor({ getContext, onSave, isBusy = () => false }) {
       const card = el('section', 'editor-group');
       card.dataset.groupId = group.id;
 
-      // 绑定鼠标悬停高亮 3D 对应部件
       card.addEventListener('mouseenter', () => {
         hoveredGroupId = group.id;
         updatePreviewScene();
@@ -351,28 +360,39 @@ export function setupModelEditor({ getContext, onSave, isBusy = () => false }) {
       name.addEventListener('input', () => { group.name = name.value; updateAssemblyNames(group); });
 
       const presetWrapper = el('div', 'editor-preset-wrapper');
-      const preset = optionSelect(PRESETS, group.preset || 'auto');
-      preset.dataset.groupPreset = group.id;
+      const presetSelect = optionSelect(PRESETS, group.preset || 'auto');
+      presetSelect.dataset.groupPreset = group.id;
 
-      // 自定义颜色 Picker 输入框
-      const colorPicker = el('input', 'editor-color-picker');
-      colorPicker.type = 'color';
-      colorPicker.value = group.customColor || '#7be6cc';
-      colorPicker.title = '选择自定义部件颜色';
-      colorPicker.style.display = group.preset === 'custom' ? 'inline-block' : 'none';
+      // 🎨 自定义颜色控制组件
+      const colorPickerContainer = el('div', 'color-picker-container');
+      colorPickerContainer.style.display = group.preset === 'custom' ? 'flex' : 'none';
 
-      preset.addEventListener('change', () => {
-        group.preset = preset.value;
-        colorPicker.style.display = group.preset === 'custom' ? 'inline-block' : 'none';
+      const colorInput = el('input', 'editor-color-input');
+      colorInput.type = 'color';
+      colorInput.value = group.customColor || '#7be6cc';
+
+      const colorValText = el('span', 'color-val-text', group.customColor || '#7be6cc');
+
+      colorInput.addEventListener('input', (e) => {
+        group.customColor = e.target.value;
+        colorValText.textContent = e.target.value;
         updatePreviewScene();
       });
 
-      colorPicker.addEventListener('input', () => {
-        group.customColor = colorPicker.value;
+      colorPickerContainer.append(colorInput, colorValText);
+
+      presetSelect.addEventListener('change', () => {
+        group.preset = presetSelect.value;
+        if (group.preset === 'custom') {
+          if (!group.customColor) group.customColor = '#7be6cc';
+          colorPickerContainer.style.display = 'flex';
+        } else {
+          colorPickerContainer.style.display = 'none';
+        }
         updatePreviewScene();
       });
 
-      presetWrapper.append(preset, colorPicker);
+      presetWrapper.append(presetSelect, colorPickerContainer);
 
       row.append(labeled('部件名称', name), labeled('展示材质', presetWrapper));
       card.append(row);
@@ -609,8 +629,12 @@ export function setupModelEditor({ getContext, onSave, isBusy = () => false }) {
       dialog.showModal();
 
       initPreview();
-      updatePreviewScene();
-      setTimeout(() => updatePreviewAspect(), 50);
+
+      // 关键修复：延迟 80ms 确保 DOM 完成渲染，规避 WebGL 初始尺寸 0 的问题
+      setTimeout(() => {
+        updatePreviewAspect();
+        updatePreviewScene();
+      }, 80);
 
       fields.scrollTop = 0;
       nameInput.focus();
