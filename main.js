@@ -24,6 +24,9 @@ const state = {
  settings: null
 };
 
+// 存储用户自定义调整的部件颜色 Map { [partId]: "#hexColor" }
+const partColors = {};
+
 const host = $('#canvas-host');
 let renderer;
 
@@ -144,13 +147,22 @@ function applyAppearance(arMode = false) {
  for (const [obj, saved] of originals) {
   const bases = [].concat(saved.material);
   const group = state.settings?.groups.find(g => g.id === saved.part);
-  [].concat(obj.material).forEach((m, i) => applyMaterialAppearance(m, bases[i], {
-   preset: group?.preset || 'auto',
-   glassOpacity: state.settings?.glassOpacity ?? 0.18,
-   view: state.view,
-   arMode,
-   selected: state.selected === saved.part
-  }));
+  const isSelected = state.selected === saved.part;
+  [].concat(obj.material).forEach((m, i) => {
+   applyMaterialAppearance(m, bases[i], {
+    preset: group?.preset || 'auto',
+    glassOpacity: state.settings?.glassOpacity ?? 0.18,
+    view: state.view,
+    arMode,
+    selected: isSelected
+   });
+
+   // 若该部件被用户设置了自定义颜色，在此同步应用给 Three.js 材质
+   const customHex = saved.part ? partColors[saved.part] : null;
+   if (customHex && m.color) {
+    m.color.set(customHex);
+   }
+  });
  }
 }
 
@@ -166,8 +178,51 @@ function selectPart(part) {
  if (copyEl) copyEl.textContent = part ? (partInfo[part].description || `包含 ${parts[part].length} 个网格。`) : '点击模型或上方列表，定位一个部件。';
 
  applyAppearance(state.inAR);
+ updatePaletteUI();
  return getState();
 }
+
+// 刷新调色板 UI 显示（O 里面的颜色、Hex code、高亮圆点）
+function updatePaletteUI() {
+ const circle = $('#color-circle');
+ const hexText = $('#color-hex-text');
+ const input = $('#custom-color-input');
+
+ let currentColor = '#7BE6CC';
+ if (state.selected && partColors[state.selected]) {
+  currentColor = partColors[state.selected];
+ } else if (state.selected && parts[state.selected]?.[0]?.material) {
+  const m = [].concat(parts[state.selected][0].material)[0];
+  if (m && m.color) currentColor = '#' + m.color.getHexString();
+ }
+
+ if (circle) circle.style.backgroundColor = currentColor;
+ if (hexText) hexText.textContent = currentColor.toUpperCase();
+ if (input) input.value = currentColor;
+
+ document.querySelectorAll('.color-dot').forEach(dot => {
+  const dotColor = dot.dataset.color;
+  dot.classList.toggle('active', !!(dotColor && dotColor.toLowerCase() === currentColor.toLowerCase()));
+ });
+}
+
+// 更改选中部件颜色
+function changeSelectedPartColor(hex) {
+ if (!state.selected) {
+  const firstPart = Object.keys(parts)[0];
+  if (firstPart) selectPart(firstPart);
+  else return;
+ }
+ partColors[state.selected] = hex;
+ updatePaletteUI();
+ applyAppearance(state.inAR);
+}
+
+// 绑定调色板点击/改变事件
+document.querySelectorAll('.color-dot').forEach(dot => {
+ dot.addEventListener('click', () => changeSelectedPartColor(dot.dataset.color));
+});
+$('#custom-color-input')?.addEventListener('input', e => changeSelectedPartColor(e.target.value));
 
 function setLift(value, { fit = true } = {}) {
  const mm = Number(value);
@@ -325,6 +380,9 @@ async function activate(entry, gltf) {
  if (state.inAR) throw new Error('请先退出 AR。');
  state.loaded = false;
  ar?.invalidate();
+
+ // 清除旧模型的部件颜色设置
+ for (const k of Object.keys(partColors)) delete partColors[k];
 
  for (const [obj, saved] of originals) {
   [].concat(obj.material).forEach(m => m.dispose());

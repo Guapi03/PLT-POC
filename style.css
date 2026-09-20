@@ -400,8 +400,8 @@ h1 {
 }
 
 .part-detail {
-    min-height: 80px;
-    padding: 16px 2px 8px;
+    min-height: 60px;
+    padding: 12px 2px 4px;
 }
 
 .part-detail > span {
@@ -414,6 +414,120 @@ h1 {
     color: var(--muted);
     line-height: 1.6;
     margin: 4px 0 0;
+}
+
+/* ==========================================================================
+   单行紧凑调色板 (Single-line Color Palette)
+   ========================================================================== */
+.color-palette-compact {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 8px 12px;
+    background: #121e24;
+    border: 1px solid var(--line-light);
+    border-radius: 8px;
+    margin-top: 10px;
+}
+
+.color-preview-group {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
+}
+
+.color-circle {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    box-shadow: 0 0 6px rgba(0, 0, 0, 0.4);
+    display: inline-block;
+    flex-shrink: 0;
+    transition: background-color 0.15s ease;
+}
+
+.color-hex {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    color: var(--mint);
+    letter-spacing: 0.5px;
+    flex-shrink: 0;
+}
+
+.palette-title {
+    font-size: 12px;
+    color: #8ba8b5;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.color-actions-inline {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-left: auto;
+}
+
+.color-swatches-inline {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.color-dot {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    border: 2px solid transparent;
+    padding: 0;
+    cursor: pointer;
+    transition: transform 0.15s ease, border-color 0.15s ease;
+    flex-shrink: 0;
+}
+
+.color-dot:hover {
+    transform: scale(1.18);
+}
+
+.color-dot.active {
+    border-color: #ffffff;
+    box-shadow: 0 0 6px rgba(123, 230, 204, 0.6);
+}
+
+.custom-picker-wrapper {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    border-radius: 6px;
+    background: #1c2e37;
+    border: 1px solid #36505c;
+    cursor: pointer;
+    flex-shrink: 0;
+}
+
+.custom-picker-wrapper:hover {
+    border-color: var(--mint);
+}
+
+.custom-picker-wrapper input[type="color"] {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    cursor: pointer;
+}
+
+.picker-icon {
+    font-size: 11px;
+    line-height: 1;
+    pointer-events: none;
 }
 
 .assembly-controls {
@@ -827,7 +941,6 @@ dialog.model-editor-style {
 
 .library-filter-row .editor-field + .editor-field { margin-top: 0; }
 
-/* 表头 3 列：名称 | 分类 | 操作 */
 .library-table-header {
     display: grid;
     grid-template-columns: minmax(0, 1.4fr) minmax(140px, 1fr) 190px;
@@ -839,7 +952,6 @@ dialog.model-editor-style {
     margin-bottom: 12px;
 }
 
-/* 条目 3 列：名称 | 分类 | 操作 */
 .library-entry {
     display: grid;
     grid-template-columns: minmax(0, 1.4fr) minmax(140px, 1fr) 190px;
@@ -852,7 +964,6 @@ dialog.model-editor-style {
     transition: all 0.2s ease;
 }
 
-/* 电脑端下解包包裹层，使 h3 与 category-badge 填充 Grid 的对应列 */
 .library-entry-top {
     display: contents;
 }
@@ -894,7 +1005,6 @@ dialog.model-editor-style {
     width: max-content;
 }
 
-/* 按钮组统一色彩 */
 .library-actions {
     display: flex;
     align-items: center;
@@ -1051,95 +1161,7 @@ body.xr-active .workspace {
 }
 
 /* ==========================================================================
-   8. 部件颜色调色板 (Color Palette)
-   ========================================================================== */
-.color-palette-container {
-    margin-top: 14px;
-    padding: 14px;
-    background: #1c2b33;
-    border: 1px solid var(--line);
-    border-radius: 8px;
-}
-
-.palette-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 12px;
-    font-size: 13px;
-    font-weight: 500;
-    color: var(--text);
-}
-
-.part-name {
-    font-size: 12px;
-    color: var(--mint);
-    font-family: 'IBM Plex Mono', monospace;
-}
-
-.color-swatches {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 8px;
-    margin-bottom: 12px;
-}
-
-.color-swatch {
-    width: 100%;
-    height: 30px;
-    border-radius: 6px;
-    border: 2px solid transparent;
-    cursor: pointer;
-    transition: transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
-    padding: 0;
-}
-
-.color-swatch:hover {
-    transform: scale(1.06);
-}
-
-.color-swatch.active {
-    border-color: var(--mint) !important;
-    box-shadow: 0 0 8px rgba(123, 230, 204, 0.4);
-}
-
-.custom-color-picker {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    font-size: 12px;
-    color: var(--muted);
-    margin-top: 6px;
-}
-
-.custom-color-picker input[type="color"] {
-    -webkit-appearance: none;
-    appearance: none;
-    border: 1px solid var(--line-light);
-    width: 32px;
-    height: 32px;
-    border-radius: 6px;
-    cursor: pointer;
-    background: none;
-    padding: 0;
-}
-
-.custom-color-picker input[type="color"]::-webkit-color-swatch-wrapper {
-    padding: 0;
-}
-
-.custom-color-picker input[type="color"]::-webkit-color-swatch {
-    border: none;
-    border-radius: 5px;
-}
-
-.custom-color-picker input[type="color"]::-moz-color-swatch {
-    border: none;
-    border-radius: 5px;
-}
-
-/* ==========================================================================
-   9. 响应式与媒体查询 (Responsive)
+   8. 响应式与媒体查询 (Responsive)
    ========================================================================== */
 @media (min-width: 1500px) {
     .workspace { grid-template-columns: minmax(0, 1fr) 390px; }
