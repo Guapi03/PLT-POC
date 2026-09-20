@@ -1,11 +1,16 @@
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { normalizeModelSettings, mergeGroups, splitGroup } from './model-settings.js';
 
 const PRESETS = [
-  ['auto', '自动识别'], ['original', '原始材质'], ['glass', '透明玻璃'],
-  ['frosted', '磨砂玻璃'], ['solid', '不透明材质'],
+  ['auto', '自动识别'],
+  ['original', '原始材质'],
+  ['glass', '透明玻璃'],
+  ['frosted', '磨砂玻璃'],
+  ['solid', '不透明材质'],
+  ['custom', '🎨 自定义颜色'], // 新增自定义颜色
 ];
 
-// 默认基础分类选项（若未连接/加载 Supabase 时的降级备用）
 let categoryOptions = [
   ['Adapters', 'Adapters'],
   ['Bottles', 'Bottles'],
@@ -42,9 +47,6 @@ function optionSelect(options, value) {
   return select;
 }
 
-/**
- * 填充下拉选择框（优先从 Supabase RPC 读取全量分类）
- */
 export async function populateCategoryOptions(selectElement, selectedValue = 'Non-builded', supabaseClient = window.supabase) {
   if (!selectElement) return;
 
@@ -76,25 +78,42 @@ export function setupModelEditor({ getContext, onSave, isBusy = () => false }) {
     link.href = cssURL;
     document.head.append(link);
   }
+
   const dialog = el('dialog', 'model-editor');
   dialog.id = 'model-editor-dialog';
   dialog.setAttribute('aria-labelledby', 'model-editor-title');
   const form = el('form', 'model-editor-form');
   form.noValidate = true;
+
   const header = el('header', 'editor-header');
   const heading = el('div');
   heading.append(el('p', 'eyebrow', 'MODEL SETTINGS'));
   const title = el('h2', '', '编辑模型');
   title.id = 'model-editor-title';
-  heading.append(title, el('p', 'editor-intro', '设置展示材质、探索分组与装配动作。保存后会随网站包一起导出。'));
+  heading.append(title, el('p', 'editor-intro', '设置展示材质、探索分组与装配动作。保存后会同步更新。'));
   const close = button('×', 'editor-close', () => cancel());
   close.id = 'model-editor-close';
   close.setAttribute('aria-label', '取消并关闭编辑');
   header.append(heading, close);
 
+  // 主主体布局容器（用于分栏：电脑端左表单右Preview，手机端上Preview下表单）
+  const mainLayout = el('div', 'editor-main-layout');
+
   const fields = el('fieldset', 'editor-fields');
   const body = el('div', 'editor-body');
   fields.append(body);
+
+  // 3D 实时结构预览面板
+  const previewPanel = el('div', 'editor-preview-panel');
+  const previewHeader = el('div', 'editor-preview-header');
+  previewHeader.append(el('span', 'editor-preview-title', '实时结构预览 (Solid)'));
+  previewHeader.append(el('span', 'editor-preview-badge', '交互亮显中'));
+
+  const previewCanvasHost = el('div', 'editor-preview-canvas-host');
+  previewCanvasHost.id = 'editor-preview-canvas-host';
+  previewPanel.append(previewHeader, previewCanvasHost);
+
+  mainLayout.append(fields, previewPanel);
 
   const footer = el('footer', 'editor-footer');
   const feedback = el('p', 'editor-feedback');
@@ -111,7 +130,7 @@ export function setupModelEditor({ getContext, onSave, isBusy = () => false }) {
   actions.append(cancelButton, saveButton);
   footer.append(feedback, actions);
 
-  form.append(header, fields, footer);
+  form.append(header, mainLayout, footer);
   dialog.append(form);
   document.body.append(dialog);
 
@@ -120,6 +139,123 @@ export function setupModelEditor({ getContext, onSave, isBusy = () => false }) {
   let groupList, assemblyList, mergeButton, assemblyFields, nameInput;
   let moveLabels = new Map();
   let hideLabels = new Map();
+
+  // 3D 预览视口变量
+  let pRenderer, pScene, pCamera, pControls, pMeshMap = new Map(), hoveredGroupId = null, animId = null;
+
+  function initPreview() {
+    if (pRenderer) return;
+
+    pScene = new THREE.Scene();
+    pScene.background = new THREE.Color('#0e1c23');
+
+    const ambient = new THREE.AmbientLight(0xffffff, 0.9);
+    const dirLight1 = new THREE.DirectionalLight(0xffffff, 0.8);
+    dirLight1.position.set(5, 10, 7);
+    const dirLight2 = new THREE.DirectionalLight(0xffffff, 0.4);
+    dirLight2.position.set(-5, -5, -5);
+    pScene.add(ambient, dirLight1, dirLight2);
+
+    pCamera = new THREE.PerspectiveCamera(40, 1, 0.01, 100);
+
+    pRenderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    pRenderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+
+    previewCanvasHost.replaceChildren(pRenderer.domElement);
+
+    pControls = new OrbitControls(pCamera, pRenderer.domElement);
+    pControls.enableDamping = true;
+    pControls.dampingFactor = 0.05;
+
+    const resizeObserver = new ResizeObserver(() => updatePreviewAspect());
+    resizeObserver.observe(previewCanvasHost);
+
+    function animate() {
+      animId = requestAnimationFrame(animate);
+      if (pControls) pControls.update();
+      if (pRenderer && pScene && pCamera) pRenderer.render(pScene, pCamera);
+    }
+    animate();
+  }
+
+  function updatePreviewAspect() {
+    if (!previewCanvasHost || !pRenderer || !pCamera) return;
+    const width = previewCanvasHost.clientWidth || 300;
+    const height = previewCanvasHost.clientHeight || 300;
+    pCamera.aspect = width / height;
+    pCamera.updateProjectionMatrix();
+    pRenderer.setSize(width, height, false);
+  }
+
+  // 重新构建预览 Scene (结构模式 + 高亮选中的 group)
+  function updatePreviewScene() {
+    if (!pScene || !context || !context.meshes) return;
+
+    // 清除原有网格
+    pMeshMap.forEach(mesh => pScene.remove(mesh));
+    pMeshMap.clear();
+
+    const groupPalette = [
+      '#4ea8de', '#560bad', '#f72585', '#4895ef', '#3a0ca3',
+      '#b5179e', '#7209b7', '#4361ee', '#4cc9f0'
+    ];
+
+    const box = new THREE.Box3();
+
+    // 建立 meshId 到 group 的映射
+    const meshToGroup = new Map();
+    draft.settings.groups.forEach((g, idx) => {
+      g.meshIds.forEach(id => meshToGroup.set(id, { group: g, index: idx }));
+    });
+
+    context.meshes.forEach(origMesh => {
+      if (!origMesh.geometry) return;
+      const cloneGeom = origMesh.geometry.clone();
+
+      const groupInfo = meshToGroup.get(origMesh.id);
+      const isHovered = groupInfo && hoveredGroupId === groupInfo.group.id;
+
+      let colorHex = groupPalette[(groupInfo ? groupInfo.index : 0) % groupPalette.length];
+
+      // 自定义颜色设定
+      if (groupInfo && groupInfo.group.preset === 'custom' && groupInfo.group.customColor) {
+        colorHex = groupInfo.group.customColor;
+      }
+
+      const mat = new THREE.MeshPhongMaterial({
+        color: isHovered ? '#7be6cc' : colorHex,
+        emissive: isHovered ? '#1a5c4e' : '#000000',
+        shininess: isHovered ? 80 : 30,
+        wireframe: false,
+        side: THREE.DoubleSide
+      });
+
+      const previewMesh = new THREE.Mesh(cloneGeom, mat);
+      previewMesh.matrix.copy(origMesh.matrix || new THREE.Matrix4());
+      previewMesh.matrix.decompose(previewMesh.position, previewMesh.quaternion, previewMesh.scale);
+
+      pScene.add(previewMesh);
+      pMeshMap.set(origMesh.id, previewMesh);
+
+      box.expandByObject(previewMesh);
+    });
+
+    // 居中相机视角
+    if (!box.isEmpty()) {
+      const center = new THREE.Vector3();
+      box.getCenter(center);
+      const size = new THREE.Vector3();
+      box.getSize(size);
+      const maxDim = Math.max(size.x, size.y, size.z);
+
+      pControls.target.copy(center);
+      const fov = pCamera.fov * (Math.PI / 180);
+      let cameraZ = Math.abs(maxDim / 2 / Math.tan(fov / 2)) * 1.8;
+      pCamera.position.set(center.x + cameraZ * 0.6, center.y + cameraZ * 0.4, center.z + cameraZ);
+      pCamera.lookAt(center);
+      pControls.update();
+    }
+  }
 
   function status(message, error = false) {
     feedback.textContent = message;
@@ -173,12 +309,24 @@ export function setupModelEditor({ getContext, onSave, isBusy = () => false }) {
     Object.assign(draft.settings.assembly, { enabled, axis, direction, distanceMm });
     draft.settings.glassOpacity = glassOpacity;
   }
+
   function renderGroups() {
     const meshNames = new Map(context.meshes.map(mesh => [mesh.id, mesh.name]));
     groupList.replaceChildren();
     draft.settings.groups.forEach((group, index) => {
       const card = el('section', 'editor-group');
       card.dataset.groupId = group.id;
+
+      // 绑定鼠标悬停高亮 3D 对应部件
+      card.addEventListener('mouseenter', () => {
+        hoveredGroupId = group.id;
+        updatePreviewScene();
+      });
+      card.addEventListener('mouseleave', () => {
+        hoveredGroupId = null;
+        updatePreviewScene();
+      });
+
       const top = el('div', 'editor-group-heading');
       const select = el('input');
       select.type = 'checkbox';
@@ -193,6 +341,7 @@ export function setupModelEditor({ getContext, onSave, isBusy = () => false }) {
       choice.append(select, el('span', '', `选择分组 ${String(index + 1).padStart(2, '0')}`));
       top.append(choice, el('span', 'editor-count', `${group.meshIds.length} 个网格`));
       card.append(top);
+
       const row = el('div', 'editor-group-row');
       const name = el('input');
       name.type = 'text';
@@ -200,11 +349,34 @@ export function setupModelEditor({ getContext, onSave, isBusy = () => false }) {
       name.value = group.name;
       name.dataset.groupName = group.id;
       name.addEventListener('input', () => { group.name = name.value; updateAssemblyNames(group); });
-      const preset = optionSelect(PRESETS, group.preset);
+
+      const presetWrapper = el('div', 'editor-preset-wrapper');
+      const preset = optionSelect(PRESETS, group.preset || 'auto');
       preset.dataset.groupPreset = group.id;
-      preset.addEventListener('change', () => { group.preset = preset.value; });
-      row.append(labeled('部件名称', name), labeled('展示材质', preset));
+
+      // 自定义颜色 Picker 输入框
+      const colorPicker = el('input', 'editor-color-picker');
+      colorPicker.type = 'color';
+      colorPicker.value = group.customColor || '#7be6cc';
+      colorPicker.title = '选择自定义部件颜色';
+      colorPicker.style.display = group.preset === 'custom' ? 'inline-block' : 'none';
+
+      preset.addEventListener('change', () => {
+        group.preset = preset.value;
+        colorPicker.style.display = group.preset === 'custom' ? 'inline-block' : 'none';
+        updatePreviewScene();
+      });
+
+      colorPicker.addEventListener('input', () => {
+        group.customColor = colorPicker.value;
+        updatePreviewScene();
+      });
+
+      presetWrapper.append(preset, colorPicker);
+
+      row.append(labeled('部件名称', name), labeled('展示材质', presetWrapper));
       card.append(row);
+
       const description = el('input');
       description.type = 'text';
       description.maxLength = 300;
@@ -213,6 +385,7 @@ export function setupModelEditor({ getContext, onSave, isBusy = () => false }) {
       description.dataset.groupDescription = group.id;
       description.addEventListener('input', () => { group.description = description.value; });
       card.append(labeled('部件说明（可选）', description));
+
       const lower = el('div', 'editor-group-bottom');
       const details = el('details', 'editor-members');
       details.append(el('summary', '', '包含的原始网格'));
@@ -220,12 +393,14 @@ export function setupModelEditor({ getContext, onSave, isBusy = () => false }) {
       for (const id of group.meshIds) members.append(el('li', '', meshNames.get(id) || id));
       details.append(members);
       lower.append(details);
+
       if (group.meshIds.length > 1) {
         const split = button('拆分分组', 'editor-text-button', () => {
           changeGroups(settings => splitGroup(settings, group.id, context.meshes));
           selectedGroups.delete(group.id);
           renderGroups();
           renderAssembly();
+          updatePreviewScene();
           status('已拆成独立网格分组。保存后生效。');
         });
         split.dataset.splitGroup = group.id;
@@ -236,6 +411,7 @@ export function setupModelEditor({ getContext, onSave, isBusy = () => false }) {
     });
     updateMergeButton();
   }
+
   function renderAssembly() {
     assemblyList.replaceChildren();
     moveLabels = new Map();
@@ -268,6 +444,7 @@ export function setupModelEditor({ getContext, onSave, isBusy = () => false }) {
         makeChoices('可用开关隐藏的分组（可选）', 'hiddenGroupIds', hideLabels),
     );
   }
+
   function render() {
     body.replaceChildren();
     const identity = el('section', 'editor-section editor-identity');
@@ -287,7 +464,6 @@ export function setupModelEditor({ getContext, onSave, isBusy = () => false }) {
     description.placeholder = '显示在模型标题下方';
     description.addEventListener('input', () => { draft.description = description.value; });
 
-    // 模型类型/分类 Select Box 下拉框
     const categorySelect = optionSelect(categoryOptions, draft.category || 'Non-builded');
     categorySelect.id = 'editor-model-category';
     populateCategoryOptions(categorySelect, draft.category || 'Non-builded');
@@ -309,14 +485,16 @@ export function setupModelEditor({ getContext, onSave, isBusy = () => false }) {
       selectedGroups.clear();
       renderGroups();
       renderAssembly();
-      status('已合并为一个探索分组，点击时会一起高亮。可继续修改名称和材质。');
+      updatePreviewScene();
+      status('已合并为一个探索分组，点击时会一起高亮。');
     });
     mergeButton.id = 'editor-merge-groups';
     groupHeading.append(mergeButton);
-    groups.append(groupHeading, el('p', 'editor-help', '选中多个分组后合并，点击时一起高亮。原始网格保持可拆分；标记文字可保留原始材质。'));
+    groups.append(groupHeading, el('p', 'editor-help', '选中多个分组后合并，鼠标悬停可实时预览 3D 高亮。'));
     groupList = el('div', 'editor-group-list');
     groupList.id = 'editor-group-list';
     groups.append(groupList);
+
     const glass = el('div', 'editor-glass');
     const range = el('input');
     range.id = 'editor-glass-opacity';
@@ -335,7 +513,7 @@ export function setupModelEditor({ getContext, onSave, isBusy = () => false }) {
       draft.settings.glassOpacity = Number(range.value);
       output.textContent = Number(range.value).toFixed(2);
     });
-    glass.append(rangeTitle, range, el('p', 'editor-help', '数值越小越透明。用于透明／磨砂玻璃及自动识别出的玻璃，原始材质不受影响。'));
+    glass.append(rangeTitle, range, el('p', 'editor-help', '用于控制透明/磨砂玻璃材质的基础不透明度。'));
     groups.append(glass);
     body.append(groups);
 
@@ -350,7 +528,7 @@ export function setupModelEditor({ getContext, onSave, isBusy = () => false }) {
     const toggle = el('label', 'editor-check editor-enable');
     toggle.append(enabled, el('span', '', '在页面显示此功能'));
     assemblyHeading.append(toggle);
-    assembly.append(assemblyHeading, el('p', 'editor-help', '让选定分组沿一个方向一起移开。关闭后，访客页面会隐藏装配控制。'));
+    assembly.append(assemblyHeading, el('p', 'editor-help', '让选定分组沿一个方向一起移开。'));
     assemblyFields = el('fieldset', 'editor-assembly-fields');
     assemblyFields.disabled = !enabled.checked;
     enabled.addEventListener('change', () => {
@@ -378,12 +556,14 @@ export function setupModelEditor({ getContext, onSave, isBusy = () => false }) {
     assemblyFields.append(assemblyRow, assemblyList);
     assembly.append(assemblyFields);
     body.append(assembly);
+
     renderGroups();
     renderAssembly();
   }
 
   function cancel() {
     if (working) return;
+    if (animId) cancelAnimationFrame(animId);
     dialog.close();
   }
 
@@ -402,11 +582,12 @@ export function setupModelEditor({ getContext, onSave, isBusy = () => false }) {
         category: draft.category || 'Non-builded',
         settings
       });
-      dialog.close();
+      cancel();
     } catch (error) {
       status(error?.message || '保存失败，修改仍保留在此窗口，请重试。', true);
     } finally { busy(false); }
   });
+
   dialog.addEventListener('cancel', event => { event.preventDefault(); cancel(); });
 
   return {
@@ -424,8 +605,13 @@ export function setupModelEditor({ getContext, onSave, isBusy = () => false }) {
       selectedGroups = new Set();
       busy(false);
       render();
-      status('修改只在保存后生效。合并分组可以随时拆分。');
+      status('修改只在保存后生效。');
       dialog.showModal();
+
+      initPreview();
+      updatePreviewScene();
+      setTimeout(() => updatePreviewAspect(), 50);
+
       fields.scrollTop = 0;
       nameInput.focus();
       return true;
