@@ -5,7 +5,6 @@ const PRESETS = [
   ['frosted', '磨砂玻璃'], ['solid', '不透明材质'],
 ];
 
-// 默认基础分类选项（若未连接/加载 Supabase 时的降级备用）
 let categoryOptions = [
   ['Adapters', 'Adapters'],
   ['Bottles', 'Bottles'],
@@ -42,12 +41,8 @@ function optionSelect(options, value) {
   return select;
 }
 
-/**
- * 填充下拉选择框（优先从 Supabase RPC 读取全量分类）
- */
 export async function populateCategoryOptions(selectElement, selectedValue = 'Non-builded', supabaseClient = window.supabase) {
   if (!selectElement) return;
-
   try {
     if (supabaseClient && typeof supabaseClient.rpc === 'function') {
       const { data: categories, error } = await supabaseClient.rpc('get_model_category_enum');
@@ -86,7 +81,7 @@ export function setupModelEditor({ getContext, onSave, isBusy = () => false }) {
   heading.append(el('p', 'eyebrow', 'MODEL SETTINGS'));
   const title = el('h2', '', '编辑模型');
   title.id = 'model-editor-title';
-  heading.append(title, el('p', 'editor-intro', '设置展示材质、探索分组与装配动作。保存后会随网站包一起导出。'));
+  heading.append(title, el('p', 'editor-intro', '设置展示材质、替换 3D 文件、探索分组与装配动作。保存后会随网站包一起导出。'));
   const close = button('×', 'editor-close', () => cancel());
   close.id = 'model-editor-close';
   close.setAttribute('aria-label', '取消并关闭编辑');
@@ -115,7 +110,7 @@ export function setupModelEditor({ getContext, onSave, isBusy = () => false }) {
   dialog.append(form);
   document.body.append(dialog);
 
-  let context, draft, originalSettings, working = false;
+  let context, draft, originalSettings, working = false, newGlbFile = null;
   let selectedGroups = new Set();
   let groupList, assemblyList, mergeButton, assemblyFields, nameInput;
   let moveLabels = new Map();
@@ -173,6 +168,8 @@ export function setupModelEditor({ getContext, onSave, isBusy = () => false }) {
     Object.assign(draft.settings.assembly, { enabled, axis, direction, distanceMm });
     draft.settings.glassOpacity = glassOpacity;
   }
+
+  // 渲染探索分组（平行排布：部件名称 + 展示材质）
   function renderGroups() {
     const meshNames = new Map(context.meshes.map(mesh => [mesh.id, mesh.name]));
     groupList.replaceChildren();
@@ -193,6 +190,8 @@ export function setupModelEditor({ getContext, onSave, isBusy = () => false }) {
       choice.append(select, el('span', '', `选择分组 ${String(index + 1).padStart(2, '0')}`));
       top.append(choice, el('span', 'editor-count', `${group.meshIds.length} 个网格`));
       card.append(top);
+
+      // 平行网格行：部件名称 与 展示材质 平行
       const row = el('div', 'editor-group-row');
       const name = el('input');
       name.type = 'text';
@@ -205,6 +204,7 @@ export function setupModelEditor({ getContext, onSave, isBusy = () => false }) {
       preset.addEventListener('change', () => { group.preset = preset.value; });
       row.append(labeled('部件名称', name), labeled('展示材质', preset));
       card.append(row);
+
       const description = el('input');
       description.type = 'text';
       description.maxLength = 300;
@@ -213,6 +213,7 @@ export function setupModelEditor({ getContext, onSave, isBusy = () => false }) {
       description.dataset.groupDescription = group.id;
       description.addEventListener('input', () => { group.description = description.value; });
       card.append(labeled('部件说明（可选）', description));
+
       const lower = el('div', 'editor-group-bottom');
       const details = el('details', 'editor-members');
       details.append(el('summary', '', '包含的原始网格'));
@@ -236,6 +237,8 @@ export function setupModelEditor({ getContext, onSave, isBusy = () => false }) {
     });
     updateMergeButton();
   }
+
+  // 渲染观察装配（平行排布：三项移动设置平行，下方两个分组选择平行）
   function renderAssembly() {
     assemblyList.replaceChildren();
     moveLabels = new Map();
@@ -268,16 +271,29 @@ export function setupModelEditor({ getContext, onSave, isBusy = () => false }) {
         makeChoices('可用开关隐藏的分组（可选）', 'hiddenGroupIds', hideLabels),
     );
   }
+
   function render() {
     body.replaceChildren();
+    newGlbFile = null;
+
     const identity = el('section', 'editor-section editor-identity');
     identity.append(el('h3', '', '模型信息'));
+
     nameInput = el('input');
     nameInput.id = 'editor-model-name';
     nameInput.type = 'text';
     nameInput.maxLength = 80;
     nameInput.value = draft.name;
     nameInput.addEventListener('input', () => { draft.name = nameInput.value; });
+
+    const categorySelect = optionSelect(categoryOptions, draft.category || 'Non-builded');
+    categorySelect.id = 'editor-model-category';
+    populateCategoryOptions(categorySelect, draft.category || 'Non-builded');
+    categorySelect.addEventListener('change', () => { draft.category = categorySelect.value; });
+
+    // 平行布局：模型名称 与 模型类型平行
+    const identityRow = el('div', 'editor-group-row');
+    identityRow.append(labeled('模型名称', nameInput), labeled('模型类型 / 分类', categorySelect));
 
     const description = el('textarea');
     description.id = 'editor-model-description';
@@ -287,16 +303,28 @@ export function setupModelEditor({ getContext, onSave, isBusy = () => false }) {
     description.placeholder = '显示在模型标题下方';
     description.addEventListener('input', () => { draft.description = description.value; });
 
-    // 模型类型/分类 Select Box 下拉框
-    const categorySelect = optionSelect(categoryOptions, draft.category || 'Non-builded');
-    categorySelect.id = 'editor-model-category';
-    populateCategoryOptions(categorySelect, draft.category || 'Non-builded');
-    categorySelect.addEventListener('change', () => { draft.category = categorySelect.value; });
+    // 增加更换模型文件（Edit Model File）UI
+    const fileContainer = el('div', 'editor-file-picker');
+    const hiddenFileInput = el('input');
+    hiddenFileInput.type = 'file';
+    hiddenFileInput.accept = '.glb,model/gltf-binary';
+    hiddenFileInput.hidden = true;
+    const fileText = el('span', 'editor-file-status', '保留当前 GLB 模型文件');
+    const fileBtn = button('选择新 GLB 文件', 'editor-button btn-sm', () => hiddenFileInput.click());
+
+    hiddenFileInput.addEventListener('change', () => {
+      if (hiddenFileInput.files && hiddenFileInput.files[0]) {
+        newGlbFile = hiddenFileInput.files[0];
+        fileText.textContent = `已选新文件: ${newGlbFile.name} (${(newGlbFile.size / 1024 / 1024).toFixed(2)} MB)`;
+        fileText.style.color = 'var(--mint, #7be6cc)';
+      }
+    });
+    fileContainer.append(fileBtn, fileText, hiddenFileInput);
 
     identity.append(
-        labeled('模型名称', nameInput),
+        identityRow,
         labeled('模型说明（可选）', description),
-        labeled('模型类型 / 分类', categorySelect)
+        labeled('更换模型文件 (Edit Model File)', fileContainer)
     );
     body.append(identity);
 
@@ -317,6 +345,7 @@ export function setupModelEditor({ getContext, onSave, isBusy = () => false }) {
     groupList = el('div', 'editor-group-list');
     groupList.id = 'editor-group-list';
     groups.append(groupList);
+
     const glass = el('div', 'editor-glass');
     const range = el('input');
     range.id = 'editor-glass-opacity';
@@ -357,6 +386,8 @@ export function setupModelEditor({ getContext, onSave, isBusy = () => false }) {
       draft.settings.assembly.enabled = enabled.checked;
       assemblyFields.disabled = !enabled.checked;
     });
+
+    // 观察装配平行行：移动轴、移动方向、最大移动距离
     const assemblyRow = el('div', 'editor-assembly-row');
     const axis = optionSelect([['y', 'Y · 上下'], ['x', 'X · 左右'], ['z', 'Z · 前后']], draft.settings.assembly.axis);
     axis.id = 'editor-assembly-axis';
@@ -373,11 +404,14 @@ export function setupModelEditor({ getContext, onSave, isBusy = () => false }) {
     distance.value = draft.settings.assembly.distanceMm;
     distance.addEventListener('input', () => { draft.settings.assembly.distanceMm = distance.valueAsNumber; });
     assemblyRow.append(labeled('移动轴', axis), labeled('移动方向', direction), labeled('最大移动距离（mm）', distance));
+
+    // 观察装配分组选择平行列
     assemblyList = el('div', 'editor-assembly-groups');
     assemblyList.id = 'editor-assembly-groups';
     assemblyFields.append(assemblyRow, assemblyList);
     assembly.append(assemblyFields);
     body.append(assembly);
+
     renderGroups();
     renderAssembly();
   }
@@ -400,6 +434,7 @@ export function setupModelEditor({ getContext, onSave, isBusy = () => false }) {
         name: draft.name.trim(),
         description: draft.description.trim(),
         category: draft.category || 'Non-builded',
+        newGlbFile, // 传递新上传的模型文件
         settings
       });
       dialog.close();
@@ -424,7 +459,7 @@ export function setupModelEditor({ getContext, onSave, isBusy = () => false }) {
       selectedGroups = new Set();
       busy(false);
       render();
-      status('修改只在保存后生效。合并分组可以随时拆分。');
+      status('修改只在保存后生效。更换模型文件将更新底层 GLB 数据。');
       dialog.showModal();
       fields.scrollTop = 0;
       nameInput.focus();

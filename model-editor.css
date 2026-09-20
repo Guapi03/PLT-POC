@@ -1,4 +1,3 @@
-/* å¼ºåˆ¶çº æ­£ dialog ç›’æ¨¡åž‹ä¸Ž Flex å¸ƒå±€è®¡ç®— */
 dialog.model-editor {
  width: min(860px, calc(100% - 32px));
  height: min(92svh, 1020px);
@@ -17,7 +16,6 @@ dialog.model-editor::backdrop {
  backdrop-filter: blur(3px);
 }
 
-/* å…³é”®ä¿®å¤ï¼šç¡®ä¿è¡¨å•å®¹å™¨å……æ»¡ dialog å¹¶é™åˆ¶æœ€å°é«˜åº¦ä¸º 0ï¼Œé˜²æ­¢è¢«å†…å®¹æ’‘å¼€ */
 .model-editor-form {
  display: flex !important;
  flex-direction: column !important;
@@ -48,7 +46,6 @@ dialog.model-editor::backdrop {
 }
 .editor-close:hover { background: #2b414b; }
 
-/* å…³é”®ä¿®å¤ï¼šå¼ºåˆ¶å¼€å¯ä¸­é—´è§†å£åŒºåŸŸçš„çºµå‘ç‹¬ç«‹æ»šåŠ¨ */
 .editor-fields {
  border: 0 !important;
  padding: 0 !important;
@@ -96,7 +93,10 @@ dialog.model-editor::backdrop {
 .editor-count { font-size: 11px; color: #8ba8b5; white-space: nowrap; }
 .editor-check { display: flex; align-items: center; gap: 9px; min-height: 28px; font-size: 13px; line-height: 1.5; cursor: pointer; min-width: 0; }
 .editor-check span { overflow-wrap: anywhere; min-width: 0; }
-.editor-group-row { display: grid; grid-template-columns: minmax(0,1.4fr) minmax(160px,1fr); gap: 16px; }
+
+/* 重点优化：平行两项表单行（部件名称与展示材质、模型名称与分类） */
+.editor-group-row { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(160px, 1fr); gap: 16px; }
+
 .editor-group-bottom { display: flex; justify-content: space-between; align-items: flex-start; gap: 20px; }
 .editor-members { min-width: 0; font-size: 11px; color: #91acb7; line-height: 1.7; }
 .editor-members summary { cursor: pointer; min-height: 30px; padding: 5px 0; user-select: none; }
@@ -111,12 +111,20 @@ dialog.model-editor::backdrop {
 .editor-assembly-fields { padding: 18px 0 0; margin: 0; border: 0; min-width: 0; transition: opacity .15s; }
 .editor-assembly-fields:disabled { opacity: .38; }
 .editor-assembly-fields:disabled input, .editor-assembly-fields:disabled label { cursor: default; }
-.editor-assembly-row { display: grid; grid-template-columns: 1fr 1fr 1.1fr; gap: 14px; }
+
+/* 重点优化：装配三列平行行（移动轴、移动方向、最大移动距离） */
+.editor-assembly-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; margin-bottom: 14px; }
+
+/* 重点优化：装配分组选择两栏平行排布 */
 .editor-assembly-groups { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
 
 .editor-choice-section { border: 1px solid #304b57; min-width: 0; border-radius: 8px; padding: 9px 14px 13px; margin: 2px 0 0; background: #172a32; }
 .editor-choice-section legend { font-size: 12px; color: #a9c1ca; padding: 0 5px; }
 .editor-choice-section .editor-check { padding: 6px 0; }
+
+/* 更换模型文件部件样式 */
+.editor-file-picker { display: flex; align-items: center; gap: 12px; background: #0e1c23; border: 1px solid #3f5b67; padding: 6px 12px; border-radius: 6px; }
+.editor-file-status { font-size: 12px; color: #8ba8b5; word-break: break-all; }
 
 .editor-footer {
  display: flex; align-items: center; justify-content: space-between; gap: 20px;
@@ -134,7 +142,7 @@ dialog.model-editor::backdrop {
  .editor-body { padding: 0 18px 23px; } .editor-section { padding-top: 22px; margin-top: 22px; }
  .editor-group { padding: 14px 13px 10px; } .editor-group-row { grid-template-columns: 1fr; gap: 0; }
  .model-editor input[type=text], .model-editor input[type=number], .model-editor textarea, .model-editor select { font-size: 16px; }
- .editor-assembly-row { grid-template-columns: 1fr 1fr; gap: 0 12px; } .editor-assembly-row .editor-field:last-child { grid-column: 1/-1; }
+ .editor-assembly-row { grid-template-columns: 1fr; gap: 0; }
  .editor-assembly-groups { grid-template-columns: 1fr; gap: 14px; } .editor-footer { padding: 15px 18px; flex-direction: column; align-items: stretch; gap: 12px; }
  .editor-feedback { max-width: none; min-height: 20px; } .editor-actions { justify-content: flex-end; } .editor-actions button { flex: 1; padding: 11px 7px; }
  .editor-enable { font-size: 12px; } .editor-section-heading { gap: 10px; } .editor-help { font-size: 12px; }

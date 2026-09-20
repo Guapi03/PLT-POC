@@ -22,7 +22,7 @@ const state = {
  modelId: null,
  category: 'Non-builded',
  settings: null,
- themeColor: '#7BE6CC' // 全局主题色变量，选择新颜色后会自动替换重置
+ themeColor: '#7BE6CC'
 };
 
 const host = $('#canvas-host');
@@ -141,12 +141,15 @@ function fitView(resetAngle = false) {
  controls.update();
 }
 
+// 核心修复：彻底隔离 view 模式与 selected 高亮状态
 function applyAppearance(arMode = false) {
  for (const [obj, saved] of originals) {
   const bases = [].concat(saved.material);
   const group = state.settings?.groups.find(g => g.id === saved.part);
   const isSelected = state.selected === saved.part;
+
   [].concat(obj.material).forEach((m, i) => {
+   // 1. 还原基础外貌（处理不透明度、预设材质形态等）
    applyMaterialAppearance(m, bases[i], {
     preset: group?.preset || 'auto',
     glassOpacity: state.settings?.glassOpacity ?? 0.18,
@@ -155,9 +158,29 @@ function applyAppearance(arMode = false) {
     selected: isSelected
    });
 
-   // 全局色彩主题效果：统一应用选中的主题色覆盖原本的材质颜色
-   if (state.themeColor && m.color) {
-    m.color.set(state.themeColor);
+   // 2. 状态隔离管理
+   if (state.view === 'original') {
+    // 原始视图：强行还原 GLB 原始色彩，彻底清除高亮发光
+    if (m.emissive) {
+     m.emissive.setHex(0x000000);
+     m.emissiveIntensity = 0;
+    }
+   } else {
+    // 玻璃 / 结构视图：统一施加全局主题色
+    if (state.themeColor && m.color) {
+     m.color.set(state.themeColor);
+    }
+
+    // 处理选中高亮：使用自发光 (Emissive) 进行层次区分，未选中则清空发光
+    if (m.emissive) {
+     if (isSelected) {
+      m.emissive.set(state.themeColor || 0x7be6cc);
+      m.emissiveIntensity = 0.45;
+     } else {
+      m.emissive.setHex(0x000000);
+      m.emissiveIntensity = 0;
+     }
+    }
    }
   });
  }
@@ -178,7 +201,6 @@ function selectPart(part) {
  return getState();
 }
 
-// 刷新全局主题调色板 UI（更新圆圈色块、Hex code、高亮圆点）
 function updatePaletteUI() {
  const circle = $('#color-circle');
  const hexText = $('#color-hex-text');
@@ -195,14 +217,12 @@ function updatePaletteUI() {
  });
 }
 
-// 切换全局色彩主题：重置上一个主题，应用选中的新主题色
 function setThemeColor(hex) {
  state.themeColor = hex;
  updatePaletteUI();
  applyAppearance(state.inAR);
 }
 
-// 绑定调色板切换事件
 document.querySelectorAll('.color-dot').forEach(dot => {
  dot.addEventListener('click', () => setThemeColor(dot.dataset.color));
 });
@@ -487,13 +507,31 @@ editor = setupModelEditor({
  },
  onSave: async patch => {
   const settings = normalizeModelSettings(patch.settings, meshDescriptors, { category: state.category });
-  active = await library.updateEntry(active.id, { ...patch, settings });
+
+  if (patch.newGlbFile) {
+   const buffer = await patch.newGlbFile.arrayBuffer();
+   await library.saveBytes(active.id, buffer);
+  }
+
+  active = await library.updateEntry(active.id, {
+   name: patch.name,
+   description: patch.description,
+   category: patch.category,
+   settings
+  });
+
   const titleEl = $('#model-title');
   if (titleEl) titleEl.textContent = active.name;
   const subTitleEl = $('#model-subtitle');
   if (subTitleEl) subTitleEl.textContent = active.description || '独立配件模型';
-  applySettings(active.settings);
-  setView('glass');
+
+  if (patch.newGlbFile) {
+   await library.choose(active.id);
+  } else {
+   applySettings(active.settings);
+   setView('glass');
+  }
+
   const noteEl = $('#model-note');
   if (noteEl) noteEl.textContent = '设置已保存在此浏览器 · 导出网站包可发布';
  }
