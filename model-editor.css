@@ -77,7 +77,7 @@ dialog.model-editor::backdrop {
 
 .editor-field { display: flex; flex-direction: column; gap: 6px; min-width: 0; margin: 0 0 14px; }
 
-/* 1. 统一标题标签的高度与对齐，保证上方标题对齐 */
+/* 统一标题标签的高度与对齐 */
 .editor-field-title {
  display: flex !important;
  align-items: center !important;
@@ -89,7 +89,7 @@ dialog.model-editor::backdrop {
  margin: 0 !important;
 }
 
-/* 2. 强制文本框、下拉框、数字框统一盒模型，高度固定 42px */
+/* 桌面端默认 14px 字体与固定高度 */
 .model-editor input[type=text],
 .model-editor input[type=number],
 .model-editor select {
@@ -103,7 +103,7 @@ dialog.model-editor::backdrop {
  background-color: #0e1c23 !important;
  color: #f1f8f8 !important;
  font: inherit !important;
- font-size: 14px !important;
+ font-size: 14px;
  padding: 0 12px !important;
  line-height: 40px !important;
  margin: 0 !important;
@@ -121,7 +121,7 @@ dialog.model-editor::backdrop {
  background-color: #0e1c23 !important;
  color: #f1f8f8 !important;
  font: inherit !important;
- font-size: 14px !important;
+ font-size: 14px;
  padding: 10px 12px !important;
  line-height: 1.6 !important;
  resize: vertical !important;
@@ -147,7 +147,7 @@ dialog.model-editor::backdrop {
 .editor-check { display: flex; align-items: center; gap: 9px; min-height: 28px; font-size: 13px; line-height: 1.5; cursor: pointer; min-width: 0; }
 .editor-check span { overflow-wrap: anywhere; min-width: 0; }
 
-/* 3. 强制平行网格行消除外边距干预，按顶部对齐 */
+/* 强制平行网格行消除外边距干预，按顶部对齐 */
 .editor-group-row > .editor-field,
 .editor-assembly-row > .editor-field,
 .editor-group-row > .editor-field + .editor-field,
@@ -215,15 +215,41 @@ dialog.model-editor::backdrop {
 .editor-actions { display: flex; align-items: center; gap: 9px; flex-shrink: 0; }
 .editor-footer .editor-primary { min-width: 96px; }
 
-@media(max-width:620px) {
- dialog.model-editor { width: calc(100% - 16px); height: calc(100svh - 24px); max-height: calc(100svh - 24px); border-radius: 12px; }
- .editor-header { padding: 21px 20px 17px; } .editor-header .eyebrow { font-size: 9px; } .model-editor .editor-header h2 { font-size: 22px; }
- .editor-intro { font-size: 12px; } .editor-close { top: 13px; right: 12px; }
- .editor-body { padding: 0 18px 23px; } .editor-section { padding-top: 22px; margin-top: 22px; }
- .editor-group { padding: 14px 13px 10px; } .editor-group-row { grid-template-columns: 1fr; gap: 0; }
- .model-editor input[type=text], .model-editor input[type=number], .model-editor textarea, .model-editor select { font-size: 16px; }
- .editor-assembly-row { grid-template-columns: 1fr; gap: 0; }
- .editor-assembly-groups { grid-template-columns: 1fr; gap: 14px; } .editor-footer { padding: 15px 18px; flex-direction: column; align-items: stretch; gap: 12px; }
- .editor-feedback { max-width: none; min-height: 20px; } .editor-actions { justify-content: flex-end; } .editor-actions button { flex: 1; padding: 11px 7px; }
- .editor-enable { font-size: 12px; } .editor-section-heading { gap: 10px; } .editor-help { font-size: 12px; }
+/* 📱 移动端自适应与禁止自动放大（Font-size >= 16px 阻止 iOS/Android 触发 Auto Zoom-in） */
+@media(max-width: 768px) {
+ dialog.model-editor {
+  width: calc(100% - 16px) !important;
+  height: calc(100svh - 24px) !important;
+  max-height: calc(100svh - 24px) !important;
+  border-radius: 12px !important;
+ }
+
+ .editor-header { padding: 18px 16px 14px !important; }
+ .editor-header .eyebrow { font-size: 9px !important; }
+ .model-editor .editor-header h2 { font-size: 20px !important; }
+ .editor-intro { font-size: 12px !important; }
+ .editor-close { top: 12px !important; right: 12px !important; }
+ .editor-body { padding: 0 16px 20px !important; }
+ .editor-section { padding-top: 18px !important; margin-top: 18px !important; }
+ .editor-group { padding: 12px 12px 10px !important; }
+
+ .editor-group-row { grid-template-columns: 1fr !important; gap: 10px !important; }
+ .editor-assembly-row { grid-template-columns: 1fr !important; gap: 10px !important; }
+ .editor-assembly-groups { grid-template-columns: 1fr !important; gap: 12px !important; }
+
+ /* 核心修复：移动端全量输入框字体设为 16px，完全解决点击输入时的页面整体自动放大 (Zoom In) 问题 */
+ .model-editor input[type=text],
+ .model-editor input[type=number],
+ .model-editor textarea,
+ .model-editor select {
+  font-size: 16px !important;
+ }
+
+ .editor-footer { padding: 14px 16px !important; flex-direction: column !important; align-items: stretch !important; gap: 12px !important; }
+ .editor-feedback { max-width: none !important; min-height: 18px !important; }
+ .editor-actions { justify-content: flex-end !important; }
+ .editor-actions button { flex: 1 !important; padding: 10px 7px !important; }
+ .editor-enable { font-size: 12px !important; }
+ .editor-section-heading { gap: 10px !important; }
+ .editor-help { font-size: 12px !important; }
 }
