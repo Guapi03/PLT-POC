@@ -817,7 +817,7 @@ dialog.model-editor-style {
 .editor-primary:hover { background: var(--mint-hover); }
 
 /* ==========================================================================
-   6. 模型库与表单网格 (Library Grid - 修复色彩与电脑端对齐)
+   6. 模型库与表单网格 (Library Grid)
    ========================================================================== */
 .library-filter-row {
     display: grid;
@@ -852,7 +852,7 @@ dialog.model-editor-style {
     transition: all 0.2s ease;
 }
 
-/* 关键修复：解包包裹层，使 h3 与 category-badge 成为 Grid 的直接子元素 */
+/* 电脑端下解包包裹层，使 h3 与 category-badge 填充 Grid 的对应列 */
 .library-entry-top {
     display: contents;
 }
@@ -894,7 +894,7 @@ dialog.model-editor-style {
     width: max-content;
 }
 
-/* 按钮组统一与基础色彩设定 */
+/* 按钮组统一色彩 */
 .library-actions {
     display: flex;
     align-items: center;
@@ -920,7 +920,6 @@ dialog.model-editor-style {
     color: #ffffff;
 }
 
-/* "使用" 按钮风格 */
 .library-actions button.use-btn {
     background: #1c3d3a;
     border-color: #2a6155;
@@ -934,7 +933,6 @@ dialog.model-editor-style {
     font-weight: 600;
 }
 
-/* "当前使用" 按钮高亮风格 */
 .library-actions button.primary,
 .library-actions button:disabled {
     background: rgba(123, 230, 204, 0.15) !important;
@@ -945,7 +943,6 @@ dialog.model-editor-style {
     cursor: default;
 }
 
-/* "编辑" 按钮风格 */
 .library-actions button.edit-btn {
     background: #233d47;
     border-color: #42606b;
@@ -957,7 +954,6 @@ dialog.model-editor-style {
     color: #ffffff;
 }
 
-/* "删除" 危险按钮风格 */
 .library-actions button.danger {
     color: #ff9b8c;
     background: rgba(255, 100, 80, 0.08);
@@ -1085,10 +1081,8 @@ body.xr-active .workspace {
     .view-tools { top: 120px; left: 23px; right: auto; }
 }
 
-CSS
 /* 📱 手机端专用自适应优化 (Max-width: 620px) */
 @media (max-width: 620px) {
-    /* 1. Header 顶栏：强制单行，缩减高度 */
     .header {
         padding: 0 10px;
         height: 52px;
@@ -1114,7 +1108,6 @@ CSS
         border-radius: 4px;
     }
 
-    /* 右上角按钮单行 (as a row) 横向紧凑排列 */
     .header-right {
         display: flex !important;
         flex-direction: row !important;
@@ -1140,7 +1133,6 @@ CSS
         height: 12px;
     }
 
-    /* 2. 主视图区域 */
     .workspace {
         display: flex;
         flex-direction: column;
@@ -1153,7 +1145,6 @@ CSS
         max-height: 420px;
     }
 
-    /* 模型名字（绿色标题）与说明文字缩小 */
     .specimen {
         top: 10px;
         left: 12px;
@@ -1176,7 +1167,6 @@ CSS
         margin: 0 3px;
     }
 
-    /* 3. “玻璃 / 原始 / 结构” 切换器缩小并固定于右上角 */
     .view-tools {
         position: absolute !important;
         top: 10px !important;
@@ -1208,7 +1198,6 @@ CSS
         font-size: 10px;
     }
 
-    /* 4. 下方控制面板 */
     .panel {
         padding: 16px 14px;
         border-left: 0;
@@ -1229,7 +1218,6 @@ CSS
         display: none;
     }
 
-    /* 弹窗移动端自适应 */
     dialog.model-editor-style {
         width: calc(100% - 16px);
         height: calc(100svh - 24px);
