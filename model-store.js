@@ -17,7 +17,7 @@ function bufferToBase64(buffer) {
     let binary = '';
     const bytes = new Uint8Array(buffer);
     const len = bytes.byteLength;
-    const chunkSize = 0x8000; // 32K 分块处理，防止大文件引发栈溢出
+    const chunkSize = 0x8000;
     for (let i = 0; i < len; i += chunkSize) {
         const chunk = bytes.subarray(i, Math.min(i + chunkSize, len));
         binary += String.fromCharCode.apply(null, chunk);
@@ -170,7 +170,6 @@ export async function setupLibrary({ activate, getActive, isBusy, onBusyChange }
             const actionGroup = document.createElement('div');
             actionGroup.className = 'library-actions';
 
-            // 使用 / 当前使用 按钮
             const useBtn = document.createElement('button');
             useBtn.className = isActive ? 'primary' : 'use-btn';
             useBtn.textContent = isActive ? '当前使用' : '使用';
@@ -181,7 +180,6 @@ export async function setupLibrary({ activate, getActive, isBusy, onBusyChange }
                 await chooseModel(model.id);
             };
 
-            // 编辑按钮
             const editBtn = document.createElement('button');
             editBtn.className = 'edit-btn';
             editBtn.textContent = '编辑';
@@ -196,7 +194,6 @@ export async function setupLibrary({ activate, getActive, isBusy, onBusyChange }
                 if (editBtnMain) editBtnMain.click();
             };
 
-            // 删除按钮
             const delBtn = document.createElement('button');
             delBtn.className = 'danger';
             delBtn.textContent = '删除';

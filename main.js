@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import { setupAR } from './ar.js';
-import { setupLibrary, saveDownload, saveGlbToIndexedDB } from './model-store.js';
+import { setupLibrary, saveDownload } from './model-store.js';
 import { setupUploader } from './model-uploader.js';
 import { disposeModel } from './model-io.js';
 import { normalizeModelSettings } from './model-settings.js';
@@ -498,14 +498,9 @@ editor = setupModelEditor({
  onSave: async patch => {
   const settings = normalizeModelSettings(patch.settings, meshDescriptors, { category: state.category });
 
-  // 防御性保存二进制数据
   if (patch.newGlbFile) {
    const buffer = await patch.newGlbFile.arrayBuffer();
-   if (typeof library.saveBytes === 'function') {
-    await library.saveBytes(active.id, buffer);
-   } else {
-    await saveGlbToIndexedDB(active.id, buffer);
-   }
+   await library.saveBytes(active.id, buffer);
   }
 
   active = await library.updateEntry(active.id, {
