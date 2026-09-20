@@ -7,7 +7,7 @@
   <meta name="description" content="玻璃仪器 3D / AR 交互展示">
   <meta name="theme-color" content="#10191e">
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%2310191e'/%3E%3Cpath d='M12 6h8m-6 0v9L7 25h18l-7-10V6' fill='none' stroke='%237be6cc' stroke-width='2' stroke-linejoin='round'/%3E%3C/svg%3E">
-  <link rel="stylesheet" href="./style.css?v=editor-6">
+  <link rel="stylesheet" href="./style.css?v=editor-7">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script type="importmap">{"imports":{"three":"./vendor/three/build/three.module.js","three/addons/":"./vendor/three/examples/jsm/"}}</script>
 </head>
@@ -70,22 +70,22 @@
         <p id="detail-copy">选择部件查看详情。</p>
       </div>
 
-      <!-- 单行紧凑型调色板：[O] [Code] 部件颜色 [Dot][Dot]...[🎨] -->
+      <!-- 全局色彩主题切换 (Global Theme Switcher) -->
       <div id="color-palette-container" class="color-palette-compact">
-        <div class="color-preview-group" title="当前部件颜色">
-          <span id="color-circle" class="color-circle" style="background-color: #7be6cc;"></span>
+        <div class="color-preview-group" title="当前主题颜色">
+          <span id="color-circle" class="color-circle" style="background-color: #7BE6CC;"></span>
           <span id="color-hex-text" class="color-hex">#7BE6CC</span>
         </div>
-        <span class="palette-title">部件颜色</span>
+        <span class="palette-title">色彩主题</span>
         <div class="color-actions-inline">
           <div class="color-swatches-inline">
             <button type="button" class="color-dot active" data-color="#7BE6CC" style="background-color: #7BE6CC;" title="薄荷绿"></button>
-            <button type="button" class="color-dot" data-color="#FF4D4F" style="background-color: #FF4D4F;" title="红色"></button>
-            <button type="button" class="color-dot" data-color="#1890FF" style="background-color: #1890FF;" title="蓝色"></button>
-            <button type="button" class="color-dot" data-color="#FAAD14" style="background-color: #FAAD14;" title="黄色"></button>
-            <button type="button" class="color-dot" data-color="#FFFFFF" style="background-color: #FFFFFF;" title="白色"></button>
+            <button type="button" class="color-dot" data-color="#FF4D4F" style="background-color: #FF4D4F;" title="珊瑚红"></button>
+            <button type="button" class="color-dot" data-color="#1890FF" style="background-color: #1890FF;" title="科技蓝"></button>
+            <button type="button" class="color-dot" data-color="#FAAD14" style="background-color: #FAAD14;" title="琥珀黄"></button>
+            <button type="button" class="color-dot" data-color="#FFFFFF" style="background-color: #FFFFFF;" title="纯白色"></button>
           </div>
-          <label class="custom-picker-wrapper" title="自定义颜色">
+          <label class="custom-picker-wrapper" title="自定义主题色">
             <input type="color" id="custom-color-input" value="#7BE6CC">
             <span class="picker-icon">🎨</span>
           </label>

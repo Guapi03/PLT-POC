@@ -400,8 +400,8 @@ h1 {
 }
 
 .part-detail {
-    min-height: 60px;
-    padding: 12px 2px 4px;
+    min-height: 56px;
+    padding: 10px 2px 2px;
 }
 
 .part-detail > span {
@@ -417,7 +417,7 @@ h1 {
 }
 
 /* ==========================================================================
-   单行紧凑调色板 (Single-line Color Palette)
+   单行紧凑调色板 (Single-line Theme Palette)
    ========================================================================== */
 .color-palette-compact {
     display: flex;
