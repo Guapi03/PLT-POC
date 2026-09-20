@@ -1,21 +1,23 @@
 /* ==========================================================================
-   1. 全局变量与基础重置 (Variables & Base Reset)
+   1. 设计变量与基础重置 (Variables & Base Reset)
    ========================================================================== */
 :root {
     color-scheme: dark;
     --bg: #10191e;
     --panel: #162229;
     --line: #2a3b43;
+    --line-light: #304850;
     --muted: #9cadb5;
     --text: #eff7f7;
     --mint: #7be6cc;
     --mint-dark: #092a25;
+    --mint-hover: #a6f3df;
     font-family: 'DM Sans', 'PingFang SC', 'Microsoft YaHei', sans-serif;
     font-size: 16px;
     font-synthesis: none;
 }
 
-* {
+*, *::before, *::after {
     box-sizing: border-box;
 }
 
@@ -23,6 +25,7 @@ body {
     margin: 0;
     background: var(--bg);
     color: var(--text);
+    line-height: 1.5;
 }
 
 button, input, select, a {
@@ -50,26 +53,15 @@ select:focus-visible,
     outline-offset: 4px;
 }
 
-button[hidden], [hidden] {
+[hidden] {
     display: none !important;
 }
 
-.tech, .eyebrow, .section-index, .part-number, .range-marks, .scale-note {
+.eyebrow, .section-index, .part-number, .range-marks, .scale-note {
     font-family: 'IBM Plex Mono', monospace;
 }
 
-.tech {
-    font-size: 12px;
-    color: var(--muted);
-}
-
-.poc-tag {
-    font-size: 12px;
-    border: 1px solid var(--line);
-    padding: 5px 9px;
-    border-radius: 4px;
-    color: #c2d0d6;
-}
+.text-right { text-align: right; }
 
 /* ==========================================================================
    2. 头部导航栏 (Header)
@@ -120,30 +112,26 @@ button[hidden], [hidden] {
     justify-content: flex-end;
 }
 
-.header-right button, .library-button {
-    white-space: nowrap;
-    flex-shrink: 0;
+.btn-sm {
+    padding: 0 12px !important;
+    font-size: 13px !important;
+    height: 36px !important;
+}
+
+.secondary-button {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: 6px;
-    height: 36px;
-    box-sizing: border-box;
-}
-
-.header-right .secondary-button {
-    width: auto;
     background: #2d4753;
     border: 1px solid #47636f;
     border-radius: 6px;
-    padding: 0 12px;
-    font-size: 13px;
+    padding: 12px;
+    font-size: 14px;
     color: var(--text);
+    transition: background 0.15s ease;
 }
 
-.header-right .secondary-button:hover {
-    background: #385867;
-}
+.secondary-button:hover { background: #385867; }
 
 .library-button {
     background: #243c43;
@@ -151,14 +139,11 @@ button[hidden], [hidden] {
     border-radius: 7px;
     padding: 0 12px 0 14px;
     font-size: 14px;
-    color: #eff7f7;
-    min-width: max-content;
-    pointer-events: auto;
-    cursor: pointer;
-    user-select: none;
+    height: 36px;
     display: inline-flex;
     align-items: center;
     gap: 8px;
+    user-select: none;
     transition: background 0.2s, border-color 0.2s, transform 0.1s;
 }
 
@@ -167,9 +152,7 @@ button[hidden], [hidden] {
     border-color: var(--mint);
 }
 
-.library-button:active {
-    transform: translateY(1px);
-}
+.library-button:active { transform: translateY(1px); }
 
 .library-button .search-icon {
     color: var(--mint);
@@ -177,9 +160,7 @@ button[hidden], [hidden] {
     transition: transform 0.2s;
 }
 
-.library-button:hover .search-icon {
-    transform: scale(1.15);
-}
+.library-button:hover .search-icon { transform: scale(1.15); }
 
 /* ==========================================================================
    3. 主工作区与 3D 视图 (Workspace & Viewer)
@@ -258,7 +239,7 @@ h1 {
     display: flex;
     padding: 4px;
     gap: 3px;
-    background: #101c23c7;
+    background: rgba(16, 28, 35, 0.78);
     border: 1px solid #334a55;
     border-radius: 8px;
     z-index: 2;
@@ -383,7 +364,7 @@ h1 {
     align-items: center;
     gap: 14px;
     width: 100%;
-    padding: 12px 12px;
+    padding: 12px;
     border: 1px solid transparent;
     border-radius: 6px;
     background: #1c2b33;
@@ -392,9 +373,7 @@ h1 {
     transition: background .15s, border-color .15s;
 }
 
-.part-button:hover {
-    background: #263c45;
-}
+.part-button:hover { background: #263c45; }
 
 .part-button[aria-pressed=true] {
     border-color: #5ba997;
@@ -406,9 +385,7 @@ h1 {
     font-size: 11px;
 }
 
-.part-button[aria-pressed=true] .part-number {
-    color: var(--mint);
-}
+.part-button[aria-pressed=true] .part-number { color: var(--mint); }
 
 .part-button > span:nth-child(2) {
     overflow-wrap: anywhere;
@@ -423,8 +400,8 @@ h1 {
 }
 
 .part-detail {
-    min-height: 96px;
-    padding: 18px 2px 20px;
+    min-height: 80px;
+    padding: 16px 2px;
 }
 
 .part-detail > span {
@@ -435,8 +412,8 @@ h1 {
 .part-detail p {
     font-size: 13px;
     color: var(--muted);
-    line-height: 1.75;
-    margin: 5px 0 0;
+    line-height: 1.6;
+    margin: 4px 0 0;
 }
 
 .assembly-controls {
@@ -522,49 +499,32 @@ input[type=range] {
     transition: transform .15s;
 }
 
-.switch-row input:checked + .switch-track {
-    background: #68ccb7;
-}
+.switch-row input:checked + .switch-track { background: #68ccb7; }
 
 .switch-row input:checked + .switch-track:after {
     transform: translateX(14px);
     background: #123b31;
 }
 
-.switch-row input:focus-visible + .switch-track {
-    outline: 2px solid var(--mint);
-    outline-offset: 4px;
-}
-
-.rotate-row {
-    margin-top: 8px;
-}
+.rotate-row { margin-top: 8px; }
 
 .ar-section {
     margin-top: 25px;
     border-top: 1px solid var(--line);
-    padding-top: 24px;
+    padding-top: 20px;
 }
 
 .ar-section .eyebrow {
     font-size: 9px;
     letter-spacing: 1.7px;
-    margin-bottom: 10px;
+    margin-bottom: 6px;
     color: #7b99a8;
 }
 
 .ar-section h2 {
-    font-size: 20px;
+    font-size: 18px;
     font-weight: 500;
-    margin: 0 0 9px;
-    letter-spacing: .02em;
-}
-
-.ar-section > p:not(.eyebrow) {
-    font-size: 12px;
-    line-height: 1.6;
-    color: var(--muted);
-    margin: 0 0 17px;
+    margin: 0 0 14px;
 }
 
 .primary-button {
@@ -575,43 +535,21 @@ input[type=range] {
     width: 100%;
     background: var(--mint);
     color: var(--mint-dark);
-    padding: 15px 18px;
+    padding: 14px 18px;
     border: 0;
     border-radius: 7px;
     font-size: 14px;
     font-weight: 600;
-    min-height: 49px;
+    min-height: 46px;
     transition: background .15s;
 }
 
-.primary-button:hover {
-    background: #a6f3df;
-}
-
-.primary-button span {
-    font-size: 20px;
-    line-height: 1;
-}
-
-.secondary-button {
-    width: 100%;
-    background: #2d4753;
-    border: 1px solid #47636f;
-    border-radius: 6px;
-    padding: 12px;
-    font-size: 14px;
-    color: var(--text);
-    transition: background 0.15s;
-}
-
-.secondary-button:hover {
-    background: #385867;
-}
+.primary-button:hover { background: var(--mint-hover); }
 
 .ar-section .ar-note {
-    margin: 9px 0 0 !important;
-    font-size: 11px !important;
-    color: #829ca9 !important;
+    margin: 8px 0 0;
+    font-size: 11px;
+    color: #829ca9;
     min-height: 18px;
 }
 
@@ -622,10 +560,9 @@ input[type=range] {
     gap: 10px;
     flex-wrap: wrap;
     margin-top: auto;
-    padding-top: 24px;
+    padding-top: 20px;
     font-size: 10px;
     color: #758d99;
-    line-height: 1.5;
 }
 
 .panel-footer a {
@@ -635,7 +572,7 @@ input[type=range] {
 }
 
 /* ==========================================================================
-   5. 弹窗基础与统一管理规范 (Dialog Base & Common Modals)
+   5. 弹窗与表单统一系统 (Dialog & Form Controls)
    ========================================================================== */
 dialog {
     background: #192b34;
@@ -643,192 +580,131 @@ dialog {
     border: 1px solid #3c525e;
     border-radius: 14px;
     padding: 0;
-    box-shadow: 0 24px 100px #0008;
+    box-shadow: 0 24px 100px rgba(0, 0, 0, 0.5);
 }
 
 dialog::backdrop {
-    background: #071015ba;
+    background: rgba(7, 16, 21, 0.73);
     backdrop-filter: blur(6px);
 }
 
-/* 统一右上角关闭按钮 */
-.dialog-close,
-.editor-close,
-dialog .dialog-close {
-    position: absolute !important;
-    right: 18px !important;
-    top: 18px !important;
-    width: 32px !important;
-    height: 32px !important;
-    min-width: 32px !important;
-    min-height: 32px !important;
-    background: transparent !important;
-    border: 0 !important;
-    border-radius: 6px !important;
-    font-size: 20px !important;
-    line-height: 1 !important;
-    color: #abc1cc !important;
-    padding: 0 !important;
-    margin: 0 !important;
-    cursor: pointer !important;
-    z-index: 99 !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    transition: all 0.15s ease !important;
+.dialog-close {
+    position: absolute;
+    right: 18px;
+    top: 18px;
+    width: 32px;
+    height: 32px;
+    background: transparent;
+    border: 0;
+    border-radius: 6px;
+    font-size: 20px;
+    color: #abc1cc;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s ease;
 }
 
-.dialog-close:hover,
-.editor-close:hover {
-    color: #fff !important;
-    background: rgba(255, 255, 255, 0.08) !important;
+.dialog-close:hover {
+    color: #fff;
+    background: rgba(255, 255, 255, 0.08);
 }
 
-dialog h2 {
-    font-size: 24px;
-    font-weight: 500;
-    margin: 15px 0;
-}
-
-/* ==========================================================================
-   6. 编辑器与数据交互统一设计系统 (Model Editor Style Architecture)
-   ========================================================================== */
 dialog.model-editor-style {
     width: min(860px, calc(100% - 32px));
-    height: min(92svh, 1020px);
-    max-height: min(92svh, 1020px);
-    padding: 0;
+    height: min(88svh, 900px);
+    max-height: min(88svh, 900px);
     background: #14242c;
-    border: 1px solid #425c65;
+    border: 1px solid var(--line-light);
     border-radius: 16px;
     overflow: hidden;
-    color: var(--text, #eff7f7);
-    box-sizing: border-box;
 }
 
-dialog.model-editor-style::backdrop {
-    background: #071015a8;
-    backdrop-filter: blur(3px);
+.model-editor-form {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
 }
 
-.model-editor-style .model-editor-form {
-    display: flex !important;
-    flex-direction: column !important;
-    height: 100% !important;
-    max-height: 100% !important;
-    min-height: 0 !important;
-    margin: 0 !important;
-    padding: 0 !important;
-    overflow: hidden !important;
-}
-
-/* 统一 Header */
-.model-editor-style .editor-header {
+.editor-header {
     position: relative;
-    padding: 26px 32px 21px;
-    border-bottom: 1px solid #304850;
+    padding: 22px 28px 18px;
+    border-bottom: 1px solid var(--line-light);
     flex-shrink: 0;
 }
 
-.model-editor-style .editor-header .eyebrow {
+.editor-header .eyebrow {
     font-size: 10px;
-    margin: 0 0 6px;
-    letter-spacing: 2px;
+    margin: 0 0 4px;
     color: var(--mint);
 }
 
-.model-editor-style .editor-header h2 {
-    font-size: 25px;
-    margin: 0 42px 8px 0;
+.editor-header h2 {
+    font-size: 22px;
+    margin: 0;
     font-weight: 500;
 }
 
-.model-editor-style .editor-intro,
-.model-editor-style .editor-help {
-    color: #9fb7c1;
-    font-size: 13px;
-    line-height: 1.75;
-    margin: 0;
-}
-
-/* 统一 Body & 滚动视图 */
-.model-editor-style .editor-fields {
-    border: 0 !important;
-    padding: 0 !important;
-    margin: 0 !important;
-    min-width: 0 !important;
-    min-height: 0 !important;
-    flex: 1 1 auto !important;
-    overflow-y: auto !important;
-    overflow-x: hidden !important;
-    overscroll-behavior: contain;
+.editor-fields {
+    flex: 1 1 auto;
+    overflow-y: auto;
     scrollbar-color: #506975 #172932;
     scrollbar-width: thin;
 }
 
-.model-editor-style .editor-body {
-    padding: 0 32px 28px;
+.editor-body { padding: 0 28px 24px; }
+
+.editor-section {
+    padding-top: 20px;
+    margin-top: 20px;
+    border-top: 1px solid var(--line-light);
 }
 
-.model-editor-style .editor-section {
-    padding-top: 25px;
-    margin-top: 25px;
-    border-top: 1px solid #304850;
+.editor-section-first {
+    border-top: 0;
+    margin-top: 0;
+    padding-top: 18px;
 }
 
-/* 统一表单元素与控件（新增相邻表单间距：解决“模型类型”紧贴“模型名称”的问题） */
-.model-editor-style .editor-field {
+.editor-field {
     display: flex;
     flex-direction: column;
-    gap: 7px;
-    min-width: 0;
+    gap: 6px;
     margin: 0;
 }
 
-/* 表单字段间距空行优化 */
-.model-editor-style .editor-field + .editor-field {
-    margin-top: 20px;
-}
+.editor-field + .editor-field { margin-top: 16px; }
 
-.model-editor-style .editor-field-title {
+.editor-field-title {
     font-size: 12px;
     color: #a9c1ca;
-    line-height: 1.5;
 }
 
+/* 统一输入框与下拉选择框 Heights & Styling */
 .model-editor-style input[type=text],
-.model-editor-style input[type=search]{
-    width: 100%;
-    min-height: 42px;
-    border: 1px solid #3f5b67;
-    border-radius: 6px;
-    background: #0e1c23;
-    color: #f1f8f8;
-    font: inherit;
-    font-size: 14px;
-    padding: 10px 11px;
-    box-sizing: border-box;
-}
-
+.model-editor-style input[type=search],
 .model-editor-style select,
 .styled-select {
     width: 100%;
+    height: 42px;
     min-height: 42px;
+    padding: 0 12px;
     border: 1px solid #3f5b67;
     border-radius: 6px;
-    background: #0e1c23;
+    background-color: #0e1c23;
     color: #f1f8f8;
-    font: inherit;
     font-size: 14px;
-    padding: 8px 11px;
+    line-height: 40px;
     box-sizing: border-box;
+    appearance: none;
+    -webkit-appearance: none;
 }
 
-.model-editor-style input:focus,
-.model-editor-style select:focus,
-.styled-select:focus {
-    outline: 2px solid var(--mint);
-    outline-offset: 1px;
+.styled-select {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%238ba8b5' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    padding-right: 36px;
 }
 
 .search-input-wrapper {
@@ -845,17 +721,14 @@ dialog.model-editor-style::backdrop {
     pointer-events: none;
 }
 
-.search-input-wrapper input {
-    padding-left: 36px !important;
-}
+.search-input-wrapper input { padding-left: 36px; }
 
-/* 拖拽上传卡片 */
-.drop-zone-card, .drop-zone {
+.drop-zone-card {
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    padding: 32px 20px;
+    padding: 28px 20px;
     background: #0e1c23;
     border: 2px dashed #3f5b67;
     border-radius: 10px;
@@ -864,21 +737,19 @@ dialog.model-editor-style::backdrop {
     transition: all 0.2s ease;
 }
 
-.drop-zone-card:hover, .drop-zone-card.dragover,
-.drop-zone:hover, .drop-zone.dragover, .drop-zone.dragging {
+.drop-zone-card:hover, .drop-zone-card.dragover {
     border-color: var(--mint);
     background: #152932;
 }
 
 .drop-zone-card .upload-icon {
-    font-size: 28px;
+    font-size: 26px;
     color: var(--mint);
-    margin-bottom: 6px;
-    line-height: 1;
+    margin-bottom: 4px;
 }
 
 .drop-zone-card strong {
-    font-size: 15px;
+    font-size: 14px;
     color: #f1f8f8;
     font-weight: 500;
 }
@@ -889,79 +760,61 @@ dialog.model-editor-style::backdrop {
     margin-top: 4px;
 }
 
-/* 统一 Footer 操作栏 */
-.model-editor-style .editor-footer {
+.editor-footer {
     display: flex;
     align-items: center;
     justify-content: space-between;
     gap: 20px;
     flex-shrink: 0;
-    padding: 18px 32px;
-    border-top: 1px solid #304850;
+    padding: 16px 28px;
+    border-top: 1px solid var(--line-light);
     background: #14242c;
 }
 
-.model-editor-style .editor-feedback {
+.editor-feedback {
     font-size: 12px;
     color: #a8c4ce;
-    line-height: 1.65;
     margin: 0;
     max-width: 360px;
 }
 
-.model-editor-style .editor-feedback.error {
-    color: #ffc1ad;
-}
-
-.model-editor-style .editor-actions {
+.editor-actions {
     display: flex;
     align-items: center;
     gap: 9px;
-    flex-shrink: 0;
 }
 
-.model-editor-style .editor-button {
-    padding: 10px 18px;
-    min-height: 40px;
+.editor-button {
+    padding: 8px 16px;
+    min-height: 38px;
     border: 1px solid #42606b;
     background: #233d47;
     color: #dff1f5;
     border-radius: 6px;
     font-size: 13px;
-    cursor: pointer;
 }
 
-.model-editor-style .editor-button:hover {
-    background: #304f59;
-}
+.editor-button:hover { background: #304f59; }
 
-.model-editor-style .editor-primary {
+.editor-primary {
     border-color: transparent;
     background: var(--mint);
     color: #092a25;
     font-weight: 600;
 }
 
-.model-editor-style .editor-primary:hover {
-    background: #a6f3df;
-}
+.editor-primary:hover { background: var(--mint-hover); }
 
 /* ==========================================================================
-   7. 模型库专用展示规范 (#library-dialog / .library-grid)
+   6. 模型库与表单网格 (Library Grid)
    ========================================================================== */
-
-/* 模型库：搜索框与分类筛选平行排列容器 */
 .library-filter-row {
     display: grid;
     grid-template-columns: minmax(0, 1fr) 220px;
     gap: 16px;
-    align-items: flex-start;
-    margin-bottom: 20px;
 }
 
-.library-filter-row .editor-field + .editor-field {
-    margin-top: 0; /* 平行时取消邻接上边距 */
-}
+.library-filter-row .editor-field + .editor-field { margin-top: 0; }
 
 .library-table-header {
     display: grid;
@@ -974,12 +827,6 @@ dialog.model-editor-style::backdrop {
     margin-bottom: 12px;
 }
 
-.library-grid, .library-inventory, #library-list {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-}
-
 .library-entry {
     display: grid;
     grid-template-columns: minmax(0, 1.4fr) minmax(160px, 1fr) 100px;
@@ -990,10 +837,6 @@ dialog.model-editor-style::backdrop {
     border: 1px solid #28414c;
     border-radius: 10px;
     transition: all 0.2s ease;
-}
-
-.library-entry-top {
-    display: contents;
 }
 
 .library-entry:hover {
@@ -1011,14 +854,9 @@ dialog.model-editor-style::backdrop {
     font-size: 14px;
     font-weight: 500;
     margin: 0;
-    color: var(--text);
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-}
-
-.library-entry.active h3 {
-    color: var(--mint);
 }
 
 .category-badge {
@@ -1030,7 +868,6 @@ dialog.model-editor-style::backdrop {
     color: #8eb1be;
     border: 1px solid #2d4b57;
     white-space: nowrap;
-    width: max-content;
 }
 
 .library-actions {
@@ -1048,69 +885,21 @@ dialog.model-editor-style::backdrop {
     border: 1px solid #3b5864;
     background: #1a2e38;
     color: #d2e4ea;
-    transition: all 0.15s ease;
-    white-space: nowrap;
-}
-
-.library-actions button:hover {
-    background: #254352;
-    border-color: #507787;
-}
-
-.library-actions button.primary,
-.library-actions button[disabled] {
-    background: #17483f;
-    border-color: var(--mint);
-    color: var(--mint);
-    font-weight: 600;
-}
-
-.library-actions .danger {
-    color: #ffa192;
-    background: transparent;
-    border-color: #5c332f;
-}
-
-.library-actions .danger:hover {
-    background: #3d1b18;
-    border-color: #8c423a;
 }
 
 /* ==========================================================================
-   8. AR / WebXR 交互样式
+   7. AR & WebXR 模态框 (AR Overlay)
    ========================================================================== */
 #ar-dialog {
-    padding: 34px;
-    width: min(600px, calc(100% - 28px));
+    padding: 28px;
+    width: min(540px, calc(100% - 28px));
     max-height: 90svh;
     overflow-y: auto;
-}
-
-#ar-description {
-    font-size: 14px;
-    color: #b4c8d1;
-    line-height: 1.9;
-    margin-bottom: 24px;
-}
-
-.dialog-footnote {
-    font-size: 12px;
-    color: #86a0af;
-    line-height: 1.6;
-    margin-bottom: 0;
 }
 
 .dialog-feedback {
     font-size: 13px;
     color: var(--mint);
-    line-height: 1.6;
-}
-
-#desktop-help label {
-    font-size: 12px;
-    color: #9cb5c1;
-    display: block;
-    margin-bottom: 8px;
 }
 
 #site-link {
@@ -1118,7 +907,7 @@ dialog.model-editor-style::backdrop {
     border: 1px solid #3d5662;
     background: #11242e;
     color: #c9dce6;
-    padding: 12px;
+    padding: 10px;
     border-radius: 6px;
     font-size: 14px;
     margin-bottom: 10px;
@@ -1128,35 +917,16 @@ dialog.model-editor-style::backdrop {
     display: flex;
     align-items: center;
     gap: 12px;
-    margin: 18px 0;
+    margin: 16px 0;
     font-size: 13px;
-}
-
-.dialog-progress .spinner {
-    width: 19px;
-    height: 19px;
-}
-
-#quicklook-link {
-    display: block;
-    width: 100%;
-}
-
-#quicklook-link img {
-    width: 100%;
-    height: auto;
-    display: block;
-    border-radius: 7px;
 }
 
 #xr-overlay {
     position: fixed;
     inset: 0;
     pointer-events: none;
-    color: white;
     font-size: 14px;
     z-index: 100;
-    background: transparent;
 }
 
 .xr-top, .xr-bottom {
@@ -1165,21 +935,19 @@ dialog.model-editor-style::backdrop {
     right: 20px;
     display: flex;
     align-items: center;
-    justify-content: space-between;
     gap: 15px;
 }
 
 .xr-top {
     top: max(20px, env(safe-area-inset-top));
-    align-items: flex-start;
+    justify-content: space-between;
 }
 
 .xr-top span {
-    background: #10242bc9;
+    background: rgba(16, 36, 43, 0.79);
     border-radius: 7px;
     padding: 12px;
     max-width: 65%;
-    line-height: 1.5;
 }
 
 .xr-bottom {
@@ -1198,46 +966,20 @@ dialog.model-editor-style::backdrop {
     font-weight: 600;
 }
 
-#exit-ar {
-    background: #17333ae6 !important;
-    color: white !important;
-}
-
 body.xr-active .header,
 body.xr-active .workspace {
     visibility: hidden;
 }
 
-.no-script {
-    padding: 20px;
-    position: fixed;
-    bottom: 0;
-    background: #912;
-    z-index: 100;
-}
-
 /* ==========================================================================
-   9. 响应式与媒体查询 (Responsive Media Queries)
+   8. 响应式与媒体查询 (Responsive)
    ========================================================================== */
-
-/* 🖥 宽屏优化 (Min-width: 1500px) */
 @media (min-width: 1500px) {
-    .workspace {
-        grid-template-columns: minmax(0, 1fr) 390px;
-    }
-    .panel {
-        padding: 36px;
-    }
-    .viewer {
-        min-height: 760px;
-    }
-    .specimen {
-        top: 45px;
-        left: 50px;
-    }
+    .workspace { grid-template-columns: minmax(0, 1fr) 390px; }
+    .panel { padding: 36px; }
+    .viewer { min-height: 760px; }
 }
 
-/* 💻 桌面端视图固定 (Min-width: 621px) */
 @media (min-width: 621px) {
     .viewer {
         position: sticky;
@@ -1245,277 +987,46 @@ body.xr-active .workspace {
         align-self: start;
         height: calc(100svh - 76px);
         min-height: 540px;
-        max-height: none;
     }
 }
 
-@media (min-width: 621px) and (max-width: 850px) {
-    .viewer {
-        height: calc(100svh - 64px);
-    }
-}
-
-/* 📱 中等屏幕/平板 (Max-width: 850px) */
 @media (max-width: 850px) {
-    .header {
-        height: 64px;
-        padding: 0 22px;
-    }
+    .header { height: 64px; padding: 0 22px; }
     .workspace {
         grid-template-columns: minmax(0, 1fr) 310px;
         min-height: calc(100svh - 64px);
     }
-    .panel {
-        padding: 25px 20px;
-    }
-    .viewer {
-        min-height: 710px;
-    }
-    .specimen {
-        left: 23px;
-        top: 25px;
-    }
-    .view-tools {
-        top: 120px;
-        left: 23px;
-        right: auto;
-    }
-    .viewer-bottom {
-        left: 22px;
-        right: 20px;
-        flex-wrap: wrap;
-        gap: 5px;
-    }
-    .scale-note {
-        left: 22px;
-        bottom: 84px;
-    }
-    .tech {
-        display: none;
-    }
+    .panel { padding: 25px 20px; }
+    .viewer { min-height: 710px; }
+    .specimen { left: 23px; top: 25px; }
+    .view-tools { top: 120px; left: 23px; right: auto; }
 }
 
-/* 📱 手机端专用自适应 (Max-width: 620px) */
 @media (max-width: 620px) {
     .header {
         padding: 0 12px;
         height: auto;
         min-height: 60px;
-        gap: 8px;
     }
-    .brand {
-        font-size: 14px;
-        gap: 4px;
-        letter-spacing: 1px;
-    }
-    .brand-mark {
-        height: 24px;
-        width: 24px;
-        font-size: 14px;
-        margin-right: 4px;
-    }
-    .header-right {
-        gap: 6px;
-    }
-    .header-right button, .library-button {
-        height: 30px;
-        font-size: 11px;
-        padding: 0 8px;
-    }
-    .header-right .secondary-button {
-        padding: 0 8px;
-        font-size: 11px;
-    }
-    .poc-tag {
-        font-size: 10px;
-        padding: 3px 6px;
-    }
-    .workspace {
-        display: flex;
-        flex-direction: column;
-    }
-    .viewer {
-        height: 55svh;
-        min-height: 380px;
-        max-height: 550px;
-    }
-    .specimen {
-        top: 16px;
-        left: 16px;
-    }
-    h1 {
-        font-size: 20px;
-    }
-    .spec {
-        font-size: 11px;
-    }
-    .eyebrow {
-        font-size: 10px;
-        margin-bottom: 6px;
-    }
-    .view-tools {
-        left: auto;
-        right: 14px;
-        top: 16px;
-    }
-    .view-choice {
-        padding: 5px 8px;
-        font-size: 11px;
-    }
-    .viewer-bottom {
-        bottom: 12px;
-        font-size: 10px;
-        flex-wrap: nowrap;
-    }
-    .scale-note {
-        bottom: 42px;
-        font-size: 10px;
-    }
-    .panel {
-        padding: 20px 16px;
-        border-left: 0;
-        border-top: 1px solid var(--line);
-    }
-    .part-list {
-        grid-template-columns: 1fr 1fr;
-        gap: 8px;
-        max-height: 250px;
-    }
-    .part-button {
-        padding: 10px 8px;
-        gap: 6px;
-        font-size: 12px;
-    }
-    .part-type {
-        display: none;
-    }
-    .part-detail {
-        min-height: 70px;
-    }
-    .panel-footer {
-        font-size: 10px;
-        padding-top: 20px;
-    }
-    .ar-section .ar-note {
-        font-size: 11px !important;
-    }
-    .ar-section > p:not(.eyebrow) {
-        font-size: 13px;
-    }
-    .switch-row, .range-label {
-        font-size: 13px;
-    }
-    .part-detail p {
-        font-size: 13px;
-    }
-    .viewer-bottom .text-button {
-        font-size: 11px;
-    }
-    .ar-section .eyebrow {
-        font-size: 10px;
-    }
-    .panel-footer a {
-        font-size: 11px;
-    }
-    .specimen h1 {
-        max-width: 60vw;
-        font-size: 20px;
-    }
-    .library-button {
-        padding: 0 8px;
-    }
-    .specimen .spec {
-        max-width: 65vw;
-        overflow-wrap: anywhere;
-    }
+    .workspace { display: flex; flex-direction: column; }
+    .viewer { height: 55svh; min-height: 380px; }
+    .panel { padding: 20px 16px; border-left: 0; border-top: 1px solid var(--line); }
+    .part-list { grid-template-columns: 1fr 1fr; }
+    .part-type { display: none; }
 
-    /* 📱 手机端弹窗与模型库自适应：两行结构化卡片与搜索框回归单列垂直 */
     dialog.model-editor-style {
         width: calc(100% - 16px);
         height: calc(100svh - 24px);
-        max-height: calc(100svh - 24px);
-        border-radius: 12px;
     }
-
-    .library-filter-row {
-        grid-template-columns: 1fr;
-        gap: 12px;
-    }
-
-    .model-editor-style .editor-header {
-        padding: 21px 20px 17px;
-    }
-
-    .model-editor-style .editor-body {
-        padding: 0 18px 23px;
-    }
-
-    .model-editor-style .editor-footer {
-        padding: 15px 18px;
+    .library-filter-row { grid-template-columns: 1fr; }
+    .library-table-header { display: none; }
+    .library-entry {
+        display: flex;
         flex-direction: column;
         align-items: stretch;
-        gap: 12px;
-    }
-
-    .model-editor-style .editor-actions {
-        justify-content: flex-end;
-    }
-
-    /* 隐藏电脑端表头 */
-    .library-table-header {
-        display: none !important;
-    }
-
-    /* 卡片转 Flex 纵向双行布局 */
-    .library-entry {
-        display: flex !important;
-        flex-direction: column !important;
-        align-items: stretch !important;
-        gap: 10px !important;
-        padding: 12px 14px !important;
-    }
-
-    /* 行 1：名称与分类 */
-    .library-entry-top {
-        display: flex !important;
-        flex-direction: row !important;
-        justify-content: space-between !important;
-        align-items: center !important;
-        width: 100% !important;
-    }
-
-    .library-entry h3 {
-        max-width: 68% !important;
-        font-size: 14px !important;
-    }
-
-    .category-badge {
-        font-size: 11px;
-        padding: 2px 8px;
-    }
-
-    /* 行 2：操作按钮 */
-    .library-actions {
-        width: 100% !important;
-        display: flex !important;
-        justify-content: flex-end !important;
-        gap: 8px !important;
-        border-top: 1px solid rgba(255, 255, 255, 0.06) !important;
-        padding-top: 8px !important;
-        margin-top: 2px !important;
-    }
-
-    .library-actions button {
-        height: 30px;
-        padding: 0 10px;
-        font-size: 12px;
-        flex: 1;
-        max-width: 100px;
-        text-align: center;
     }
 }
 
-/* 减弱动画辅助模式 */
 @media (prefers-reduced-motion: reduce) {
     * {
         animation-duration: .001ms !important;
