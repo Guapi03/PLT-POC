@@ -29,12 +29,3 @@ The main goal of this Proof of Concept is to evaluate the feasibility and perfor
 * **Frontend Hosting:** Cloudflare Workers / Pages
 * **3D / AR Rendering:** WebXR / 3D Model Viewer Technologies
 * **Version Control:** Git & GitHub
-
----
-
-## 🚀 Getting Started
-
-Simply open the live link on your browser or mobile device:  
-👉 [https://test.guapi03.workers.dev/](https://test.guapi03.workers.dev/)
-
-*For AR features, please access the site using an AR-supported mobile device (iOS/Android).*
