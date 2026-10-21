@@ -2,7 +2,7 @@
 
 This project is a Proof of Concept (POC) designed to explore modern, interactive ways of viewing and inspecting laboratory equipment online.
 
-🔗 **Live Demo:** [https://test.guapi03.workers.dev/](https://test.guapi03.workers.dev/)
+🔗 **Live Demo & AR View:** [https://test.guapi03.workers.dev/](https://test.guapi03.workers.dev/)
 
 ---
 
@@ -34,7 +34,7 @@ The main goal of this Proof of Concept is to evaluate the feasibility and perfor
 
 ## 🚀 Getting Started
 
-Simply open the live link on your browser or mobile device:
+Simply open the live link on your browser or mobile device:  
 👉 [https://test.guapi03.workers.dev/](https://test.guapi03.workers.dev/)
 
 *For AR features, please access the site using an AR-supported mobile device (iOS/Android).*
